@@ -1,0 +1,109 @@
+Von Neumann Architecture
+    When we execute a program under Von Neumann Architecture the following
+    steps happen:
+        1) fetch the program from the destination and load into memory
+        2) point to the first instruction
+        3) set the program counter to the first instruction
+
+// File try.c
+// compile with:
+//      gcc try.c -o try
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+    int x = 0xabc;
+    printf("%d\n", x);
+    exit(0); // Do not use return
+}
+
+OS --> Assembly --> Machine Language --> Circuits --> Logic Gates -|-> Physics
+
+When the compiler instantiates an array of a given type, the address of the
+array is divisible by the sizeof( the type ).
+
+struct node {
+    int info;
+    struct node *next;
+};
+typedef struct node node;
+
+int main(void) {
+    node a1, a3;
+    a1.info = 123;
+    a1.next = NULL;
+    a3 = &a1; // a3->info == a1.info
+}
+
+Addresses are four bytes (in a four byte system.)
+
+The memory for a system:
+    +-------+
+    | text  |
+    +-------+
+    | data  | -- where the memory for dynamic allocation comes from.
+    +-------+
+    | heap  |
+    +-------+
+    | stack |
+    +-------+
+
+void getnode(node **p) {
+        *p = malloc(sizeof(node));
+}
+
+void caller() {
+    void getnode(int **); // only declare functions where you need them.
+    node *ptr;
+    getnode(&ptr);
+    if (!ptr) {  // or ptr == NULL
+        // error
+    }
+}
+
+void search(node *list, int *i, node **pred, node **cont) {
+    *cont = list;
+    *pred = NULL;
+    while (*cont) {
+        if ((*cont)->info == x;)
+            return;
+        *cont = *(cont)->next;
+        *pred = *cont;
+    }
+}
+
+Inside of the department, cps158.  Sparc64 Look this up.
+You should be able to use the editor.  HLearn the c debugger the makefile is 
+contained in /tmp.
+
+multics -- Bell labs by the creator of unix.  To make this they designed C. (1972).  C is a procedural language in the family with ALGOL.  It is compiled, procedural.  (a procedural is the same as a module.)  
+    By default char is not signed.  -128 < < 127.  float is a single point floating int.  Double is double precision.  Functions define "your defined instruction."  Formal parameter is the parameter type in a function prototype.  (functions occurr three times.)  Activation record is the name of the brake of memory in the stack.  Everything is added to the stack. (Including the local variables.  Where is the heap?)
+
+        char 256
+        int 4 bytes
+            2 bytes (short)
+            8 bytes (long)
+            16 bytes (long long)
+        float 32 bits
+        double 64 bits
+        extended precision 90 bits
+        quad precision 128 bits.
+
+    int a = 3, b = 5, *z; add(a, b, z); // seg fault (holds garbage.)
+    int **x; -\
+               \        |       |
+                \-----> +-------+
+                        |       | x
+                        +--^----+
+                        |  |    | *x
+                        +--^----+
+                        |  |    | **x
+                        +-------+
+                        |       |
+
+    try swaping two values without using a temporary variable.
+
+precision is baped in the significand.  So single precision has 23 bit-precision
+
+For floating point integers we have a normalized significand (which means that
+the digits to the right of the decimal must be non zero.)  THis is to guard against multiple representations such as 0.5*10e0 = 0.05*10e1.
