@@ -1,6 +1,13 @@
 VON NEUMANN ARCHITECTURE
-C EXAMPLES
-PRIMITIVE DATA TYPES IN C
+COMPUTER STRUCTURE OVERVIEW
+C LANGUAGE
+    MEMORY
+    ADDRESSES
+    PRIMITIVE DATA TYPES IN C
+    POINTERS
+    FUNCTIONS
+    EXAMPLES
+******************************EDIT LINE****************************
 FLOATING-POINT REPRESENTATION
 SHAPES
 BOOLEAN ALGEBRA
@@ -48,173 +55,203 @@ ISA
 
 ------------------------------------------------------------------------------
 VON NEUMANN ARCHITECTURE
-Von Neumann Architecture
+
+         ______    store    __________
+        /      \ --------> |          |
+       |  CPU   |          |  memory  |
+        \______/ <-------- |__________|
+                   fetch
+
     When we execute a program under Von Neumann Architecture the following
     steps happen:
         1) fetch the program from the destination and load into memory
         2) point to the first instruction
         3) set the program counter to the first instruction
 
-------------------------------------------------------------------------------
-C EXAMPLES
-// File try.c
-// compile with:
-//      gcc try.c -o try
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(void) {
-    int x = 0xabc;
-    printf("%d\n", x);
-    exit(0); // Do not use return
-}
-
-OS --> Assembly --> Machine Language --> Circuits --> Logic Gates -|-> Physics
-
-When the compiler instantiates an array of a given type, the address of the
-array is divisible by the sizeof( the type ).
-
-struct node {
-    int info;
-    struct node *next;
-};
-typedef struct node node;
-
-int main(void) {
-    node a1, a3;
-    a1.info = 123;
-    a1.next = NULL;
-    a3 = &a1; // a3->info == a1.info
-}
-
-Addresses are four bytes (in a four byte system.)
-
-The memory for a system:
-    +-------+
-    | text  |
-    +-------+
-    | data  | -- where the memory for dynamic allocation comes from.
-    +-------+
-    | heap  |
-    +-------+
-    | stack |
-    +-------+
-
-void getnode(node **p) {
-        *p = malloc(sizeof(node));
-}
-
-void caller() {
-    void getnode(int **); // only declare functions where you need them.
-    node *ptr;
-    getnode(&ptr);
-    if (!ptr) {  // or ptr == NULL
-        // error
-    }
-}
-
-void search(node *list, int *i, node **pred, node **cont) {
-    *cont = list;
-    *pred = NULL;
-    while (*cont) {
-        if ((*cont)->info == x;)
-            return;
-        *cont = *(cont)->next;
-        *pred = *cont;
-    }
-}
-
-Inside of the department, cps158.  Sparc64 Look this up.
-You should be able to use the editor.  HLearn the c debugger the makefile is
-contained in /tmp.
-
-multics -- Bell labs by the creator of unix.  To make this they designed C. (1972).  C is a procedural language in the family with ALGOL.  It is compiled, procedural.  (a procedural is the same as a module.)
-    By default char is not signed.  -128 < < 127.  float is a single point floating int.  Double is double precision.  Functions define "your defined instruction."  Formal parameter is the parameter type in a function prototype.  (functions occurr three times.)  Activation record is the name of the brake of memory in the stack.  Everything is added to the stack. (Including the local variables.  Where is the heap?)
 
 ------------------------------------------------------------------------------
-PRIMITIVE DATA TYPES IN C
-        char 256
-        int 4 bytes
-            2 bytes (short)
-            8 bytes (long)
-            16 bytes (long long)
-        float 32 bits
-        double 64 bits
-        extended precision 90 bits
-        quad precision 128 bits.
+COMPUTER STRUCTURE OVERVIEW
 
-    int a = 3, b = 5, *z; add(a, b, z); // seg fault (holds garbage.)
-    int **x; -\
-               \        |       |
-                \-----> +-------+
-                        |       | x
-                        +--^----+
-                        |  |    | *x
-                        +--^----+
-                        |  |    | **x
-                        +-------+
-                        |       |
+    OS --> Assembly --> Machine Lang. --> Circuits --> Logic Gates -|-> Physics
 
-    try swaping two values without using a temporary variable.
+    The above is a graph representing decreasing levels of abstraction.
+
+
+------------------------------------------------------------------------------
+C LANGUAGE
+    The C language began with the operating system, Multix, created by
+    Bell labs (the creators of Unix.)  To make the OS, they designed C.
+    (1972).  C is a procedural language in the family with ALGOL.  It is
+    compiled, procedural.  (A procedure is the same as a module.)
+
+    MEMORY
+        An activation record is the name of the brake of memory in the stack.
+        Everything is added to the stack. (Including the local variables.)
+
+        The memory for a system:
+            +-------+
+            | text  |
+            +-------+
+            | data  | -- where the memory for dynamic allocation comes from.
+            +-------+
+            | heap  |
+            +-------+
+            | stack |
+            +-------+
+
+
+    ADDRESSES
+        Addresses are four bytes (in a four byte system.) When the compiler
+        instantiates an array of a given type, the address of the array is
+        divisible by the size of the type in bytes.
+
+    PRIMITIVE DATA TYPES
+        By default char is not signed.  Float is a single point
+        floating number.  Double is double precision.
+
+            char 256
+            int 4 bytes
+                2 bytes (short)
+                8 bytes (long)
+                16 bytes (long long)
+            float 32 bits
+            double 64 bits
+            extended precision 90 bits
+            quad precision 128 bits.
+
+    POINTERS
+        int a = 3, b = 5, *z; add(a, b, z); // seg fault (holds garbage.)
+
+                            |       |
+               int **x----> +-------+
+                            |       | x
+                            +--^----+
+                            |  |    | *x
+                            +--^----+
+                            |  |    | **x
+                            +-------+
+                            |       |
+
+        Try swaping two values without using a temporary variable.
+
+    FUNCTIONS
+         Formal parameter is the parameter type in a function prototype.
+
+    EXAMPLES
+        ex:
+            // File try.c
+            // compile with:
+            //      gcc try.c -o try
+            #include <stdio.h>
+            #include <stdlib.h>
+
+            int main(void) {
+                int x = 0xabc;
+                printf("%d\n", x);
+                exit(0); // Do not use return
+            }
+
+        ex:
+            struct node {
+                int info;
+                struct node *next;
+            };
+            typedef struct node node;
+
+            int main(void) {
+                node a1, a3;
+                a1.info = 123;
+                a1.next = NULL;
+                a3 = &a1; // a3->info == a1.info
+            }
+
+
+        ex:
+
+            void getnode(node **p) {
+                    *p = malloc(sizeof(node));
+            }
+
+            void caller() {
+                void getnode(int **); // use prototypes only where you need them.
+                node *ptr;
+                getnode(&ptr);
+                if (!ptr) {  // or ptr == NULL
+                    // error
+                }
+            }
+
+            void search(node *list, int *i, node **pred, node **cont) {
+                *cont = list;
+                *pred = NULL;
+                while (*cont) {
+                    if ((*cont)->info == x;)
+                        return;
+                    *cont = *(cont)->next;
+                    *pred = *cont;
+                }
+            }
 
 ------------------------------------------------------------------------------
 FLOATING-POINT REPRESENTATION
-precision is baped in the significand.  So single precision has 23 bit-precision
+    Precision is baped in the significand.  So single precision has 23
+    bit-precision
 
-For floating point integers we have a normalized significand (which means that
-the digits to the right of the decimal must be non zero.)  THis is to guard against multiple representations such as 0.5*10e0 = 0.05*10e1. Because the digit is
-always one, then, we do not need to remember it.  Single precision (32 bits),
-double precision (64 bits).  And extended precision (80 bits).  (Intel.)  Quad
-precision (128 bits -- non-standard.)
+    For floating point integers we have a normalized significand (which means
+    that the digits to the right of the decimal must be non zero.)  This is to
+    guard against multiple representations such as 0.5*10e0 = 0.05*10e1.
+    Because the digit is always one, then, we do not need to remember it.
+    Single precision (32 bits), double precision (64 bits).  And extended
+    precision (80 bits).  (Intel.)  Quad precision (128 bits -- non-standard.)
 
-Single:
- sign
-  |  biased
-  V  exponent   normalized significand
- +-----------------------------------+
- | |         |                       |
- +-----------------------------------+
-1 bit 8 bits    23 bits
+    Single:
+     sign
+      |  biased
+      V  exponent   normalized significand
+     +-----------------------------------+
+     | |         |                       |
+     +-----------------------------------+
+    1 bit 8 bits    23 bits
 
-Converting a decimal
-    Convert 0.5:
-        0.5 x 2 = 1.0
+    Converting a decimal
+        Convert 0.5:
+            0.5 x 2 = 1.0
 
-        0.5 (decimal) --> 0.1 (binary)
+            0.5 (decimal) --> 0.1 (binary)
 
-    Convert 23.5 (decimal) to binary
-    23 --> 10111.1 == 1.01111*2e4  add bias 127 --> 1.01111*e(127+4)
-       --> 0 10000011 01111000000000000000000
-       --> 0x413C0000
+        Convert 23.5 (decimal) to binary
+        23 --> 10111.1 == 1.01111*2e4  add bias 127 --> 1.01111*e(127+4)
+           --> 0 10000011 01111000000000000000000
+           --> 0x413C0000
 
-    Convert 0.33333:
-        0.33333 * 2 = 0.66666
-        0.66666 * 2 = 1.33332
-        0.33332 * 2 = 0.66664
-        0.66664 * 2 = 1.33328
-        0.33328 * 2 = 0.66658
-        0.66658 * 2 = 1.33312
+        Convert 0.33333:
+            0.33333 * 2 = 0.66666
+            0.66666 * 2 = 1.33332
+            0.33332 * 2 = 0.66664
+            0.66664 * 2 = 1.33328
+            0.33328 * 2 = 0.66658
+            0.66658 * 2 = 1.33312
 
-        0.33333... (decimal) --> 0.010101... (binary)
+            0.33333... (decimal) --> 0.010101... (binary)
 
 
-Double precision:
+    Double precision:
 
-    sign
-     | biased
-     V exponent      normalized significand
-    +-------------------------------------------------------------------+
-    | |          |                                                      |
-    +-------------------------------------------------------------------+
-     1  11             52
+        sign
+         | biased
+         V exponent      normalized significand
+        +-------------------------------------------------------------------+
+        | |          |                                                      |
+        +-------------------------------------------------------------------+
+         1  11             52
 
-3.75 (decimal) --> 11.11 == 1.111*2e1 == 1.111*2e(1083+1)
-0 10000001110 1110000000000000000000000000000000000000000000000000
+    3.75 (decimal) --> 11.11 == 1.111*2e1 == 1.111*2e(1083+1)
+    0 10000001110 1110000000000000000000000000000000000000000000000000
 
-Extended precision has extra bits in the significant.
+    Extended precision has extra bits in the significant.
 
-Quad precision: 1 sign bit, 15 exponent bits, 110 significand bits
-For Intel processors, the remaining bits are truncated to 64 bits by the OS.
+    Quad precision: 1 sign bit, 15 exponent bits, 110 significand bits
+    For Intel processors, the remaining bits are truncated to 64 bits by the OS.
 
 ------------------------------------------------------------------------------
 SHAPES
@@ -505,9 +542,9 @@ Ex: design a circuit to calculate an odd parity bit for three bits.
         x         ___
         -------|-|   \
         y      | |XOR }---+      ___
-        -------|-|___/    +---|-|   \    |\
-        z                     | |XOR }---|!}O--p
-        ----------------------|-|___/    |/
+        -------|-|___/    +---|-|   \
+        z                     | |XOR }---|>o--p
+        ----------------------|-|___/
 
 
     PARITY CHECKER
@@ -890,7 +927,7 @@ To handle invalid inputs,
 
     STATE DIAGRAM
 
-state diagrame -- vertices (states) and edges (transitions).  1 is the input
+state diagram -- vertices (states) and edges (transitions).  1 is the input
 0 is the output.
             0
      __   _____    ____
