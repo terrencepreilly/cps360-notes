@@ -1090,3 +1090,135 @@ I/O, device access, recursion.  Return from subroutines.
            Sparc does not have this.
            Autoincrement/autodecrement  this is the origin of ++. (Which now
            simulates autoincrement/autodecrement.)
+
+goto in C is unconditional, while in assembly it is conditional.
+ISA addressing modes: immediate, direct address register 9register indirect)
+indirect relative indexed autoincrement, autodecrement.
+    ex: 2 byte instruction size memory half-word adressable
+
+    Type            Abbr    Contents
+    Program counter pc      200
+    Register        R1      400
+    Index register  xR      100
+    Accumulator     AC
+
+    Memory:
+        Address     Contents
+        +------+------------------+
+        | 200  |  load AC         |
+        +------+------------------+
+        | 201  |  500             |
+        +------+------------------+
+        | 202  |                  |
+        +------+------------------+
+        | ...  |                  |
+        +------+------------------+
+        | 399  |  450             |
+        +------+------------------+
+        | 400  |  700             |
+        +------+------------------+
+        | ...  |                  |
+        +------+------------------+
+        | 500  |  800             |
+        +------+------------------+
+        | ...  |                  |
+        +------+------------------+
+        | 600  |  900             |
+        +------+------------------+
+        | ...  |                  |
+        +------+------------------+
+        | 702  |  325             |
+        +------+------------------+
+        | ...  |                  |
+        +------+------------------+
+        | 800  |  300             |
+        +------+------------------+
+
+
+    Mode                AC      Effective Address
+    direct address      800
+    indirect address    300
+    relative (pc)       325     EA = 500->202->702
+    register            700
+    index               900
+    register indirect   700     EA = 400 (R1)
+    immediate           500
+
+
+    Sparc implementation.
+
+        Immediate -- There is a size limitation of 13 bit two's complement
+        (-4096 to 4095)
+            mov 2, %l0
+        Register
+            mov %l0, %l1
+        Relative (pc) -- The offset is 24-bit 2's complement, actually +/- 2^19
+        because of the size of instructions and the sign byte.   This limits the
+        size of a module to 8MB.
+            ba iloop
+            nop
+        Indirect does not exist (we can simulate.)
+        Direct addressing
+            ld [100], %l1
+        Indexed We can not do [%l0 + %l1] because it may be larger than 32 bits.
+        This is how parameters are based is the call frame
+            ld [%i0 + 100], %l1
+
+        A -> B -> C ==> |       |                   ^   -
+                        +-------+                   |
+                        |  CF B |                   |
+                        +-------+ <-- %fp           | lower
+                        |  p B  | <-- %fp + 4       | addresses
+                        +-------+                   |
+                        |  CF A |                   |
+                        +-------+                   |   +
+        We need to use the frame pointer because the stack pointer is moving.
+        A positive offset allows you to go to the previous call fram and the
+        parameters.  Negative offsets allow you to go into the current call
+        frame.  (No future.)
+
+Other ISA operations: arithmetic logical flow control transfer (branch call and
+return)  System call interface.
+
+
+            
+          ____________
+         /Applications\
+        /  __________  \
+       /  / OS Kernel\  \
+      /  /    ____    \  \
+     /  /_   /    \   _\  \
+    |   __  |  HW  |  __   |
+     \  \    \____/    /  /
+      \  \            /  /
+       \  \___| |____/  /
+        \              /
+         \____________/
+
+            the open gaps in the above representation are called "traps".
+            They are implemented as system calls, and allow applications
+            to access the underlying hardware.
+
+
+System calls
+    man 3 fread
+    ex: exit
+    In sparc you use a trap instruction, ta 0.  In the original unix there were
+200 system calls.  In linux there are 600 system calls.  In Windows there are
+close to 10,000 system calls.  System calls are possible back doors.
+    System calls are stored in a system call table.
+    To exit:
+
+        clr %o0
+        call exit, 0 ! actualy doing a ta 0
+        nop
+
+    Reading one byte at a time takes the same amount of overhead as reading 2048
+bytes, say, from the system.  So we generally do buffered IO, because it is more
+effective.
+
+ISA count of operands.  Instruction format.  Options are fixed size (SPARC and
+most risk processors), variable sized instructions (have gone out of fashion
+sometimes known as mixed or hybrid.)  Classes of different instruction sizes
+(byte word, double word, etc.) (This is technicaly known as fixed size within
+classes.)  ISA symcode or instruction.
