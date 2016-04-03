@@ -430,9 +430,9 @@ Ex: design a circuit to calculate an odd parity bit for three bits.
         x         ___
         -------|-|   \
         y      | |XOR }---+      ___
-        -------|-|___/    +---|-|   \
-        z                     | |XOR }--- p
-        ----------------------|-|___/
+        -------|-|___/    +---|-|   \    |\
+        z                     | |XOR }---|!}O--p
+        ----------------------|-|___/    |/
 
 
     ex:
@@ -457,3 +457,583 @@ Ex: design a circuit to calculate an odd parity bit for three bits.
             1  | 1  | 0  | 1  | 0
             1  | 1  | 1  | 0  | 0
             1  | 1  | 1  | 1  | 1
+
+        2) f(x, y, z, p) = x'y'z'p' + x'y'zp + x'yz'p +
+                           x'yzp' + xy'z'p + xy'zp' +
+                           xyz'p' + xyzp
+
+        3)
+            xy\zp
+               \  00   01   11   10
+                +----+----+----+----+
+             00 |  1 |  0 |  1 |  0 |
+                +----+----+----+----+
+             01 |  0 |  1 |  0 |  1 |
+                +----+----+----+----+
+             11 |  1 |  0 |  1 |  0 |
+                +----+----+----+----+
+             10 |  0 |  1 |  0 |  1 |
+                +----+----+----+----+
+
+            f(x, y, z, p) = (x XOR y XOR z XOR p)'
+
+        4)         ____
+            x ----|XOR |     ____
+            y ----|____|----|XOR |     ____
+            z---------------|____|----|XOR |
+            p-------------------------|____|----|>o---c
+
+        Checks for errors in computation (if its not even, or odd as we expect,
+        then an error has occurred.)
+
+4-bit adder
+If we add the sign bit to this we have the magnitude (if it is positive,
+we do not do anything.  If it is negative, we get the two's complement.)
+             ___
+       +--|-|   \
+       |  | |XOR }---
+    a0----|-|___/
+       |
+       |     ___
+       +--|-|   \
+       |  | |XOR }---
+A   a1----|-|___/       A'
+       |
+       |     ___
+       +--|-|   \
+       |  | |XOR }---
+    a2----|-|___/
+       |
+       |     ___
+       |--|-|   \
+       |  | |XOR }---
+    a3-+--|-|___/
+
+        (=) = x3 x2 x1 x0  where xi = aibi + ai'bi'
+        (<) = b3a3' + x3b2a2' + x3x2b1a1' + x3x2x1b1a0'
+
+    Magnitude comparator
+
+        __|__|____|__|__
+  c0 __|                |__ c1
+       |________________|
+           |   |   |
+           >   =   <
+
+Decoder -- allows you to select a particular numbered output
+
+    2x4 decoder
+
+    x  | y  | d0 | d1 | d2 | d3
+    ---|----|----|----|----|----
+    0  | 0  | 1  | 0  | 0  | 0
+    0  | 1  | 0  | 1  | 0  | 0
+    1  | 0  | 0  | 0  | 1  | 0
+    1  | 1  | 0  | 0  | 0  | 1
+
+void ha(int a, int b, int *s, int *s1) {
+    *s = *c = 0;
+    *s = (a & 1)^(b & 1);
+    *c = (a & 1)&(b & 1);
+}
+
+ssh username@cps158.cps.cmich.edu
+scp filename user@host:~/fileshere
+scp user@host:~/filesthere filehere
+
+2x4 Decoder
+      ___
+   a-|   |--ab
+     |2x4|--ab'
+   b-|   |--a'b
+     |___|--a'b'
+
+2x4 with enable 3x8 decoder
+             ___
+    a-----+-|   |--
+          | |2x4|--
+    b---+---|   |--
+        | | |___|--
+        | |   |
+    e-+-------+
+      | | |  ___
+      | | +-|   |
+      | |   |2x4|
+      | +---|   |
+      |     |___|
+      V       |
+      o ------+
+
+Used to decode instructions:
+
+    +--------+--------------+
+    | opcode | operands     |
+    +--------+--------------+
+
+The opcode is the input and it selects the aperation to do.
+
+Multiplexer -- (sharing of hardware.)  Selection tells if the output is to be.
+
+        _____
+        |    |
+  I0----|2x1 |
+        | mux|---- out
+  I1----|    |
+        |____|
+          |
+        selection
+
+
+The following "function table" describes the above 2x1 multiplexer.
+
+    selection  | I0 | I1 | out
+    -----------|----|----|----
+    0          | 0  | ...| 0
+    0          | 1  | ...| 1
+    1          | ...| 0  | 0
+    1          | ...| 1  | 1
+
+    Or, more simply
+
+    s  | out
+    ---|----
+    0  | I0
+    1  | I1
+
+
+    I0                ___
+    -----------------|   \
+                +->o-|AND |---+
+             +--|----|___/    |
+             o  |             |    ___
+             ^  |             +---\   \
+    S        |  |                  |OR }--- O
+    ---------+  |             +---/___/
+             |  |     ___     |
+             +--|----|   \    |
+    I1          +->o-|AND |---+
+    ------------|----|___/
+                |
+                e
+
+dual inline 2x4 multiplexer -- made of 2 2x1 multiplexers.  To "multiplex the
+process" is to use the mux to do multitasking.
+
+         _______
+        |  ___  |
+    a0----|2x1| |
+        | |mux|---o1
+    a2----|___| |
+        |  ___  |
+    a1----|2x1| |
+        | |mux|---o2
+    a3----|___| |
+        |_______|
+            |
+           Sel-----clock
+
+Demultiplexer
+             ___
+            |   |---o1
+       i----|   |
+            |___|---o2
+
+
+3x1 mux
+           ___
+    a0----|2x1|   ___
+          |mux|--|2x1|
+    a1----|___|  |mux|
+    a2------|----|___|
+            |      |
+            s0     s1
+
+    s0 | s1 | out
+    ---|----|----
+    0  | 0  | a0
+    0  | 1  | a1
+    1  | 0  | a2
+    1  | 1  | a2
+
+Sequential circuits (through time)  Uses a clock.  An oscillator
+that generates equally spaced sequences of 0s and 1s.
+
+
+    + ----| [] |--- -
+
+         ____      ____      ____
+        | 1  |    | 1  |    | 1  |
+    ____|    |____|    |____|    |____
+     0         0         0         0
+
+    Once cycle is called a clock cycle.  The vertical bar represents
+the rise time (the time it takes the oscillator to switch from 0 to
+1.)
+    Filtered to transpire from a signal like a sine wave.  One cycle
+is called a "tick".  For every tick there is an interrupt.  Used in
+time sharing, time-outs, and hardware use.  Combinational circuits do
+remember anything.
+
+    Time for NOT ( ->o )
+
+        0   1   2   3   4   5   6
+            ___         ___         1
+  in 1         |_______|   |___     0
+
+ out 1          _______     ___     1
+            ___|       |___|        0
+
+
+          ________________
+    -----| Combinational  |-----
+         |   Circuit      |
+     +-->|________________|---+
+     |         ___            |
+     +--------[___]-----------+
+              feedback
+                mechanism
+
+     We want out(t) = f( in( t-1 ) )
+
+flip-flop/latch
+
+    S/R latch (the base component of all flip-flops.)
+
+    +----|>o--+------- 0
+    |         |
+    +------------+
+              |  |      stable state
+    +---------+  |
+    |            |
+    +----|>o-----+---- 1
+
+
+Flip-flop with enable
+         __             ___
+        |   \          |   \
+    +---|AND |---------|OR  }-+------- Q
+    |   |___/       +--|___/  |
+    |               |         |
+e --|               +---------|-+
+    |               +---------+ |
+    |    ___        |   ___     |
+    |   |   \       +--|   \    |
+    +---|AND |---------|OR  }---+----- Q'
+        |___/          |___/
+
+Next state table
+    R = 0   S = 0   (G2 = 0 G1 = 1)
+    R = 0   S = 1v0 (G2 = 0 G1 = 1)
+    R = 0^1 S = 0   (G2 = 1 G1 = 0)
+    r = 1   s = 0^1 (G2 = 0 G1 = 0) -- invalid operation/state (Q1 and Q2 can't
+                                       be the same.)
+
+Next-state table
+Q, Qn (next state)
+
+    S  | R  | Qn                  S -- set input r -- reset input
+    ---|----|--------------
+    0  | 0  | no change (Q)
+    0  | 1  | 0
+    1  | 0  | 1
+    1  | 1  | invalid
+
+Next-state table for flipflop with enable
+
+    e  | in1 | in2 |
+    ---|-----|-----|---------
+    0  |     |     | Q
+    1  | 0   | 0   | Q
+    1  | 0   | 1   | 0
+    1  | 1   | 0   | 1
+    1  | 1   | 1   | invalid
+
+Excitation table
+Given Q, Qn
+What are the inputs to flip-flops like this?
+
+    Q  | Qn | S  | R
+    ---|----|----|---
+    0  | 0  | 0  | x <-- don't care
+    0  | 1  | 1  | 0
+    1  | 0  | 0  | 1
+    1  | 1  | x  | 0
+
+     ___
+in--|FF |--out
+    |_ _|
+      ^
+      clock
+
+The clock is tied to the enable (reflesh as in dynamic RAM)
+To handle invalid inputs,
+
+                Delay Flip-flop
+                     ___
+            R       |   \
+        +-----------|OR  }o---+--- Q
+        |        +--|___/     |
+        |        |            |
+        o        +----------+ |
+        ^        +----------|-+
+        |        |   ___    |
+    D   |   S    +--|   \   |
+    ----+-----------|OR  }o-+----- Q'
+                    |___/
+
+    D  | Qn
+    ---|----
+    0  | 0
+    1  | 1
+
+    There are also toggle flip-flops and JK flip-flops
+
+state diagrame -- vertices (states) and edges (transitions).  1 is the input
+0 is the output.
+            0
+     __   _____    ____
+    /  \ L     \  L    \
+  0|    Q       Q2      | 1
+    \__7 \_____7  \____/
+            1
+
+SPARC
+    mov, add, sub, srl, sll, sra, sla (sr shift right, sl is shift left.)
+mov is a synthetic instruction made of
+
+    add %g0, %l0, %l1
+
+    Where %l0 is the destination, %l1 is the source
+
+    add %l1, %l2, %l3 ! l1 is operand 1, l2 is operand 2, l3 is destination
+
+    Condition codes: n z v c.  'n' is one if the result is negative, 'z' is one if the result is zero.  'v' is one if there is an overflow. Condition codes are only set if you use the cc version of opcodes such as addcc.  To compare two values there is a synthetic instruction:
+    cmp %l0, %l1
+    Which is composed of
+    subcc %l0, %l1, %g0
+    There are two ways to change the flow of the instruction: branch and jump. (branch is limited to the same function.)
+
+    cmp %l2, 2
+    be label         ! also bn, ba, bne
+    nop              ! be is synthetic
+
+
+ex:
+        .data
+    str:    .asciz "%x\n"
+            .text
+            .align 4
+
+        .global main
+    main: save %sp, -64, %sp ! reserves 64 bits on the stack
+        mov 2, $o0           ! for the registers in the call frame
+        mov 3, %o1
+        call .mul
+        nop
+
+        mov %o0, %a1
+        set str, %o1
+        call printf
+        nop
+
+        clr %o0         ! This line is special for main
+        call exit, 0    ! exit returns control back to the
+        nop             ! operating system.
+
+Instructions
+    .rem    remainder
+    .mul    multiply
+    .div    divide
+    are the synthetic instructions for this thing.
+    To call a function (same for assembly and c)
+        1) set the parameters in %o's.
+        2) call the function.
+        3) return is visible in %o0
+
+        clr <==> add %g0 %g0 %o0
+
+    when returning from function we say
+        restore
+        return
+        nop
+
+disassemble: disass or do it with gcc: gcc -S a1.c -o a1.s
+    x/i derefference
+    x/x the machine instruction
+    x/x $ps
+
+Register window (the register available to a caller.):
+
+          | g
+          | o
+        -----
+        g | l
+        o | i
+        -----
+        l | B
+        i |
+        -----
+        A |
+
+    Register window A and B where A calls B.  When B terminates it sends the value
+over.  The 64 comes from saving register l and i (g is shared and o becomes i.)
+    save %sp, -64, %sp
+
+call graph
+                main
+
+                  |
+                  v
+
+                  A
+
+                  |
+                  V
+
+                  B
+
+For each function the compiler sets up a call frame in the stack.  The information
+that goes in a call frame is the return address to the caller.  It contains the
+storage for local variables.  also, we store the parameters. When it happens that
+we use to many function calls, we put the frame in the stack.  In the entire
+processor there is only one window frame.  So parameters are passed in the stack.
+
+                  g is shared throughout
+                 /
+              | g
+              / o --> o becomes i (result returned in %o0)
+             /----
+          | g | l
+          / o-->i
+         /--------
+        g / l | C
+        o-->i |
+        -------
+        l | B
+        i |
+        ---
+        A |
+
+
+
+          |         |
+   sp --> |         |
+1)        | CF_main |
+          |---------|
+
+
+
+   sp --> |         |
+          | CF_A    |
+          |---------|
+2)        | CF_main |
+          |---------|
+
+
+
+   sp --> |         |
+          | CF_B    |
+          |---------|
+          | CF_A    |
+          |---------|
+3)        | CF_main |
+          |---------|
+
+ * fp points to the bottom of the current call frame.
+   sp points to the top of the current call frame.
+
+The frame pointer points to the bottom of the call frame.  The parameters are
+below it in the calling function.  So a positive offset gets them.  The local
+parameters are accessed with a negative offset.
+
+Accessing memory. SPARC is a load-store architecture.  It loads a register from
+memory (same as fetch.)  store stores the contents of the register to the memory.
+
+    load [address] %d ! load th econtents of the memory at the location and puts it in d
+
+    store %d [address] ! stores some data in memory
+
+The load instructions are ldsb, ldub, ldsh, lduh, ld, ldd.  The store instructions
+are stb, sth, st, std.  ld and st work with words (32 bits.)
+
+    ex: ld [100], %l0 ! load 4 bytes into register from 100
+    mov %l1, [100] ! moves those bytes into l1
+    addrij = base iJ + j
+
+You can map a multidimensional raray you can map it in two ways: row major and
+column major.  Row major is mapped something like
+
+    row1 | row2 | row3.
+
+    C derivatives do this.  Fortran is column major:
+
+    col1 | col2 | col3
+
+
+Stack frame is composed of the following
+    return address
+    local variables
+    parameters
+    frame pointer
+    saving registers
+
+fp + n (parametres)
+fp - n (locals)
+
+
+A stack architecture works as follows
+
+    push a           <==>  mov a, %i0
+    push b                 mov b, %i1
+    call mul               call .mul
+                           nop
+
+Control flow constructs use 2's complement
+
+    if (x & 1)      <==>    ! x is %l0, odd is %l1
+        odd = 1;            mov 1, %i1
+    else                    and %l0, 1, %l2
+        odd = 0;            cmp %l2, 1
+                            bne else
+                            nop
+                            ba nelse
+                            nop
+                            else: mov 0, %l1
+                            nelse:
+
+
+    int sum(A[n]) {             <==>    clr %l2
+        int i = 0, sum = 0;             clr %o0
+        while (i < n) {                 loop: cmp %o0, %l1
+            sum += A[i];                be done
+            i++;                        nop
+        }                               sll %o0, 2, %o3
+        return sum;                     add %l0, %o3, %o3
+    }                                   ld [%o3], %o1
+                                        add %o1, %l2, %l2
+                                        inc %o0
+                                        ba loop
+                                        nop
+                                        done:
+
+
+Accessing an array
+    sll %o0, 2, %o3     ! multiply by 4 (offset)
+    add %l0, %o3, %o3   ! o3 is the effective address
+    ld [%o3], %o1
+
+
+ISA (instruction set architecture) is made during the design of a new processor.
+or when modifying or updating the current processor.  Involves arithmetic
+operations, logic operations, controle flow (calling functions), accessing memory,
+I/O, device access, recursion.  Return from subroutines.
+        ____________
+       | High Level |
+       |  Language  |
+       +------------+
+       |    ISA     |
+       +------------+
+       |  Hardware  |
+       |____________|
+
+    Main features:
