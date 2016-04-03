@@ -1,3 +1,53 @@
+VON NEUMANN ARCHITECTURE
+C EXAMPLES
+PRIMITIVE DATA TYPES IN C
+FLOATING-POINT REPRESENTATION
+SHAPES
+BOOLEAN ALGEBRA
+KARNAUGH MAPS
+MIDTERMS
+BUILDING COMPONENTS
+    HALF-ADDER
+    FULL-ADDER
+    RIPPLE-CARRY ADDER
+    PARITY
+    PARITY CHECKER
+    4-BIT ADDER
+    MAGNITUDE COMPARATOR
+    DECODER
+        2x4 DECODER
+        3x8 DECODER
+        MULTIPLEXER
+        DUAL INLINE 2X4 MULTIPLEXER
+        DEMULTIPLEXER
+        3x1 MULTIPLEXER
+TIMED (?) CIRCUITS
+    FLIP-FLOP
+    NEXT-STATE TABLE
+    EXCITATION TABLE
+    DELAY FLIP-FLOP
+    STATE DIAGRAM
+SPARC ASSEMBLY
+    CONDITION CODES
+    INSTRUCTIONS
+    GDB
+    REGISTER WINDOW
+BUILDING COMPONENTS
+    CALL GRAPH
+    WINDOW FRAME
+    ACCESSING MEMORY
+    STACK FRAME
+    CONTROL FLOW
+    ARRAYS
+ISA
+    MAIN FEATURES
+    ADDRESSING MODES
+        SPARC IMPLEMENTATION
+    SYSTEM CALLS
+    OPERAND ENCODING
+
+------------------------------------------------------------------------------
+VON NEUMANN ARCHITECTURE
 Von Neumann Architecture
     When we execute a program under Von Neumann Architecture the following
     steps happen:
@@ -5,6 +55,8 @@ Von Neumann Architecture
         2) point to the first instruction
         3) set the program counter to the first instruction
 
+------------------------------------------------------------------------------
+C EXAMPLES
 // File try.c
 // compile with:
 //      gcc try.c -o try
@@ -73,12 +125,14 @@ void search(node *list, int *i, node **pred, node **cont) {
 }
 
 Inside of the department, cps158.  Sparc64 Look this up.
-You should be able to use the editor.  HLearn the c debugger the makefile is 
+You should be able to use the editor.  HLearn the c debugger the makefile is
 contained in /tmp.
 
-multics -- Bell labs by the creator of unix.  To make this they designed C. (1972).  C is a procedural language in the family with ALGOL.  It is compiled, procedural.  (a procedural is the same as a module.)  
+multics -- Bell labs by the creator of unix.  To make this they designed C. (1972).  C is a procedural language in the family with ALGOL.  It is compiled, procedural.  (a procedural is the same as a module.)
     By default char is not signed.  -128 < < 127.  float is a single point floating int.  Double is double precision.  Functions define "your defined instruction."  Formal parameter is the parameter type in a function prototype.  (functions occurr three times.)  Activation record is the name of the brake of memory in the stack.  Everything is added to the stack. (Including the local variables.  Where is the heap?)
 
+------------------------------------------------------------------------------
+PRIMITIVE DATA TYPES IN C
         char 256
         int 4 bytes
             2 bytes (short)
@@ -103,6 +157,8 @@ multics -- Bell labs by the creator of unix.  To make this they designed C. (197
 
     try swaping two values without using a temporary variable.
 
+------------------------------------------------------------------------------
+FLOATING-POINT REPRESENTATION
 precision is baped in the significand.  So single precision has 23 bit-precision
 
 For floating point integers we have a normalized significand (which means that
@@ -160,9 +216,14 @@ Extended precision has extra bits in the significant.
 Quad precision: 1 sign bit, 15 exponent bits, 110 significand bits
 For Intel processors, the remaining bits are truncated to 64 bits by the OS.
 
+------------------------------------------------------------------------------
+SHAPES
 Shapes
     ASCII code 7 bits.  Was folowed by UTF (Universal Text format), which has several formats: 8, 16, 32.  Unicode is a standard which does not say how to represent the characters.  Windows uses UTF16LE for unicode representation.  (Unicode is a standard, not an encoding scheme.)  ASCII shapes fit the same representation of contiguous intres.
 
+
+------------------------------------------------------------------------------
+BOOLEAN ALGEBRA
 George Boole (1856) - described multivalued discrete Algebra.
 Huntington (1904) - imposed the condition that variables should be either 0 or 1.  He wrote the axiom of this algebra.
 Shanon (1936) - used Huntington's math to design relays.
@@ -176,6 +237,8 @@ Simplification of logic gates is done with either algebraic simplification or Ka
                 = y + y'
                 = 1
 
+------------------------------------------------------------------------------
+KARNAUGH MAPS
 Karnaugh maps (kmaps) -- relies on the sasumption that we should be able to
 express a boolean function as a sum of main terms (produces the maximum number
 of main terms is determined by 2^n where n is the number of variables.) 2, 3,
@@ -258,6 +321,9 @@ A term can be shared between covers, but covers cannot be nested.
      10 | 8  | 9  | 11 | 10 |
         +----+----+----+----+
 
+------------------------------------------------------------------------------
+MIDTERMS
+
 Number of midterms -- a midterm is a combination of statements
 that perfectly describes a single row in the truth table.
 
@@ -265,6 +331,11 @@ Having covers of four, etc., you can bend it so that all four corners touch.
 There is no way to see having functions is minimalized.  All processes are
 optimized for adding use adders.
 
+
+------------------------------------------------------------------------------
+BUILDING COMPONENTS
+
+    HALF-ADDER
 Ex:
     Build a circuit for a half-adder
 
@@ -310,6 +381,7 @@ Ex:
 
 
 
+    FULL-ADDER
 To implement a full-adder you have to use the carry from a half-adder.
 
     1) Build the truth table
@@ -374,6 +446,7 @@ To implement a full-adder you have to use the carry from a half-adder.
           |                       |AND |----+
           +-----------------------|___/
 
+    RIPPLE-CARRY ADDER
 
 Full adders are generally equipped with an enable.  They can be chained
 together to create a ripple-carry adder:
@@ -389,6 +462,8 @@ before it.  However, we can implement an adder in  constant time by separating
 the carry and sum bits into two operations.  There will be a carry for
 c1 + 1 = aibi + aici + bici = aibi + ci(ai + bi).  This is called a carry
 generate property adder.
+
+    PARITY
 
 Parity bit -- add a parity bit and dictat that the number of bits should be always
 even (even parity) or odd (odd parity).
@@ -435,6 +510,7 @@ Ex: design a circuit to calculate an odd parity bit for three bits.
         ----------------------|-|___/    |/
 
 
+    PARITY CHECKER
     ex:
         Generate an odd parity checker for four bits
 
@@ -486,6 +562,7 @@ Ex: design a circuit to calculate an odd parity bit for three bits.
         Checks for errors in computation (if its not even, or odd as we expect,
         then an error has occurred.)
 
+    4-BIT ADDER
 4-bit adder
 If we add the sign bit to this we have the magnitude (if it is positive,
 we do not do anything.  If it is negative, we get the two's complement.)
@@ -512,6 +589,8 @@ A   a1----|-|___/       A'
         (=) = x3 x2 x1 x0  where xi = aibi + ai'bi'
         (<) = b3a3' + x3b2a2' + x3x2b1a1' + x3x2x1b1a0'
 
+    MAGNITUDE COMPARATOR
+
     Magnitude comparator
 
         __|__|____|__|__
@@ -520,6 +599,7 @@ A   a1----|-|___/       A'
            |   |   |
            >   =   <
 
+    DECODER
 Decoder -- allows you to select a particular numbered output
 
     2x4 decoder
@@ -541,12 +621,16 @@ ssh username@cps158.cps.cmich.edu
 scp filename user@host:~/fileshere
 scp user@host:~/filesthere filehere
 
+        2x4 DECODER
+
 2x4 Decoder
       ___
    a-|   |--ab
      |2x4|--ab'
    b-|   |--a'b
      |___|--a'b'
+
+        3x8 DECODER
 
 2x4 with enable 3x8 decoder
              ___
@@ -571,6 +655,8 @@ Used to decode instructions:
     +--------+--------------+
 
 The opcode is the input and it selects the aperation to do.
+
+        MULTIPLEXER
 
 Multiplexer -- (sharing of hardware.)  Selection tells if the output is to be.
 
@@ -616,6 +702,8 @@ The following "function table" describes the above 2x1 multiplexer.
                 |
                 e
 
+        DUAL INLINE 2X4 MULTIPLEXER
+
 dual inline 2x4 multiplexer -- made of 2 2x1 multiplexers.  To "multiplex the
 process" is to use the mux to do multitasking.
 
@@ -632,12 +720,14 @@ process" is to use the mux to do multitasking.
             |
            Sel-----clock
 
+        DEMULTIPLEXER
 Demultiplexer
              ___
             |   |---o1
        i----|   |
             |___|---o2
 
+        3x1 MULTIPLEXER
 
 3x1 mux
            ___
@@ -654,6 +744,9 @@ Demultiplexer
     0  | 1  | a1
     1  | 0  | a2
     1  | 1  | a2
+
+------------------------------------------------------------------------------
+TIMED (?) CIRCUITS
 
 Sequential circuits (through time)  Uses a clock.  An oscillator
 that generates equally spaced sequences of 0s and 1s.
@@ -695,6 +788,7 @@ remember anything.
 
      We want out(t) = f( in( t-1 ) )
 
+    FLIP-FLOP
 flip-flop/latch
 
     S/R latch (the base component of all flip-flops.)
@@ -720,6 +814,8 @@ e --|               +---------|-+
     |   |   \       +--|   \    |
     +---|AND |---------|OR  }---+----- Q'
         |___/          |___/
+
+    NEXT-STATE TABLE
 
 Next state table
     R = 0   S = 0   (G2 = 0 G1 = 1)
@@ -748,6 +844,8 @@ Next-state table for flipflop with enable
     1  | 1   | 0   | 1
     1  | 1   | 1   | invalid
 
+    EXCITATION TABLE
+
 Excitation table
 Given Q, Qn
 What are the inputs to flip-flops like this?
@@ -764,6 +862,8 @@ in--|FF |--out
     |_ _|
       ^
       clock
+
+    DELAY FLIP-FLOP
 
 The clock is tied to the enable (reflesh as in dynamic RAM)
 To handle invalid inputs,
@@ -788,6 +888,8 @@ To handle invalid inputs,
 
     There are also toggle flip-flops and JK flip-flops
 
+    STATE DIAGRAM
+
 state diagrame -- vertices (states) and edges (transitions).  1 is the input
 0 is the output.
             0
@@ -797,7 +899,8 @@ state diagrame -- vertices (states) and edges (transitions).  1 is the input
     \__7 \_____7  \____/
             1
 
-SPARC
+------------------------------------------------------------------------------
+SPARC ASSEMBLY
     mov, add, sub, srl, sll, sra, sla (sr shift right, sl is shift left.)
 mov is a synthetic instruction made of
 
@@ -806,6 +909,8 @@ mov is a synthetic instruction made of
     Where %l0 is the destination, %l1 is the source
 
     add %l1, %l2, %l3 ! l1 is operand 1, l2 is operand 2, l3 is destination
+
+    CONDITION CODES
 
     Condition codes: n z v c.  'n' is one if the result is negative, 'z' is one if the result is zero.  'v' is one if there is an overflow. Condition codes are only set if you use the cc version of opcodes such as addcc.  To compare two values there is a synthetic instruction:
     cmp %l0, %l1
@@ -840,6 +945,8 @@ ex:
         call exit, 0    ! exit returns control back to the
         nop             ! operating system.
 
+    INSTRUCTIONS
+
 Instructions
     .rem    remainder
     .mul    multiply
@@ -857,10 +964,14 @@ Instructions
         return
         nop
 
+    GDB
+
 disassemble: disass or do it with gcc: gcc -S a1.c -o a1.s
     x/i derefference
     x/x the machine instruction
     x/x $ps
+
+    REGISTER WINDOW
 
 Register window (the register available to a caller.):
 
@@ -878,6 +989,8 @@ Register window (the register available to a caller.):
     Register window A and B where A calls B.  When B terminates it sends the value
 over.  The 64 comes from saving register l and i (g is shared and o becomes i.)
     save %sp, -64, %sp
+
+    CALL GRAPH
 
 call graph
                 main
@@ -897,6 +1010,8 @@ that goes in a call frame is the return address to the caller.  It contains the
 storage for local variables.  also, we store the parameters. When it happens that
 we use to many function calls, we put the frame in the stack.  In the entire
 processor there is only one window frame.  So parameters are passed in the stack.
+
+    WINDOW FRAME
 
                   g is shared throughout
                  /
@@ -946,6 +1061,8 @@ The frame pointer points to the bottom of the call frame.  The parameters are
 below it in the calling function.  So a positive offset gets them.  The local
 parameters are accessed with a negative offset.
 
+    ACCESSING MEMORY
+
 Accessing memory. SPARC is a load-store architecture.  It loads a register from
 memory (same as fetch.)  store stores the contents of the register to the memory.
 
@@ -969,6 +1086,7 @@ column major.  Row major is mapped something like
 
     col1 | col2 | col3
 
+    STACK FRAME
 
 Stack frame is composed of the following
     return address
@@ -987,6 +1105,8 @@ A stack architecture works as follows
     push b                 mov b, %i1
     call mul               call .mul
                            nop
+
+    CONTROL FLOW
 
 Control flow constructs use 2's complement
 
@@ -1016,12 +1136,14 @@ Control flow constructs use 2's complement
                                         nop
                                         done:
 
+    ARRAYS
 
 Accessing an array
     sll %o0, 2, %o3     ! multiply by 4 (offset)
     add %l0, %o3, %o3   ! o3 is the effective address
     ld [%o3], %o1
 
+ISA
 
 ISA (instruction set architecture) is made during the design of a new processor.
 or when modifying or updating the current processor.  Involves arithmetic
@@ -1035,6 +1157,8 @@ I/O, device access, recursion.  Return from subroutines.
        +------------+
        |  Hardware  |
        |____________|
+
+    MAIN FEATURES
 
     Main features:
         1) Classification of ISA
@@ -1091,6 +1215,8 @@ I/O, device access, recursion.  Return from subroutines.
            Autoincrement/autodecrement  this is the origin of ++. (Which now
            simulates autoincrement/autodecrement.)
 
+    ADDRESSING MODES
+
 goto in C is unconditional, while in assembly it is conditional.
 ISA addressing modes: immediate, direct address register 9register indirect)
 indirect relative indexed autoincrement, autodecrement.
@@ -1144,6 +1270,7 @@ indirect relative indexed autoincrement, autodecrement.
     register indirect   700     EA = 400 (R1)
     immediate           500
 
+        SPARC IMPLEMENTATION
 
     Sparc implementation.
 
@@ -1180,8 +1307,7 @@ indirect relative indexed autoincrement, autodecrement.
 Other ISA operations: arithmetic logical flow control transfer (branch call and
 return)  System call interface.
 
-
-            
+    SYSTEM CALLS
           ____________
          /Applications\
         /  __________  \
@@ -1216,6 +1342,8 @@ close to 10,000 system calls.  System calls are possible back doors.
     Reading one byte at a time takes the same amount of overhead as reading 2048
 bytes, say, from the system.  So we generally do buffered IO, because it is more
 effective.
+
+    OPERAND ENCODING
 
 ISA count of operands.  Instruction format.  Options are fixed size (SPARC and
 most risk processors), variable sized instructions (have gone out of fashion
