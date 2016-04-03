@@ -1037,3 +1037,56 @@ I/O, device access, recursion.  Return from subroutines.
        |____________|
 
     Main features:
+        1) Classification of ISA
+            Defined by stack architecture (operands are implied.  Examples:
+            HP_UX, calculators, JVM.)
+        2) Accumulator register architecture.  There is a register called an
+           accumulator which is involved in all operations. (One operand is in
+           the accumulator, one is in the operand.)
+                c <- a + b    <==>     load a
+                                       add b
+                                       store c
+           Examples include the first processor 80s used in automatic doors and
+           such.)
+        3) Load and store architecture.
+                load r1, [A]
+                load r2, [B]
+                add r1, r2, r3
+                store [C], r3
+           Examples include most modern processors.
+        4) Memory acces and modes.  The ISA must address how the memory is
+           addressed.  Memory is byte addressable or word addressable.  (This
+           means that we can only acses words.)  It can be little endian or big
+           big-endian.  Effective address -- the base address plus the offset.
+           Memory modes: immediate (operand is in the instruction itself.
+                ex: mov 2, %l2
+           register mode (the operand is in the register.)
+                ex: move %l1, %l2
+           direct address mode (The memory address is directly in the operand.)
+                ex: mov [100], %l3
+           register direction (the address is in the register.
+                ex: st %l0, [%l1]
+           register indirection (address of the address of the operand is in
+           the register (this is not supported in SPARC.)  To implement this we
+           would
+                mov 500, %l0
+                ld [%l0], %l1
+           reladive offset mode (uses effective addressing.)  The address is
+           relative to some value.)  Relative to the program counter pc.  This is
+           how branching and jumping work.  In the case of labels the address
+           must by 24-bit 2's complement, so you can jump +/- 2^23.  since
+           addresses are byte addressable, this is reduced to +/- 2^21 so it is
+           pc +/- 2^21.
+
+           load-point -- the start of a chunck of allocated memory.  So when a
+           program is loaded it is loaded with the first instruction at the
+           load point.  So compilers produce position independent code.
+           (PIC)  This is code relative to the pc.
+
+           index mode is relative mode where one register is the index register
+           and addressing is relative to the contents of the indexregister.  This
+           helpsfor accessing arrays.
+                ex: load [%l0 + n], %l1 ! Where l0 is the index register
+           Sparc does not have this.
+           Autoincrement/autodecrement  this is the origin of ++. (Which now
+           simulates autoincrement/autodecrement.)
