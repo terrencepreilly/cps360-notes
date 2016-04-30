@@ -1894,7 +1894,7 @@ The access should look like
     v[2][0] -> miss
 we could make this more efficient by incrementing the row first.
 
-Piplin instruction execution.  Single processors are the fastest and as fast as we can go right now.  The latest is ~3.5e9 instructions per second.  But we acn get more done by piplining.  Similar to an assembly line.  We do not increase the speed, we increase the throughput.  Remember the steps are
+Pipline instruction execution.  Single processors are the fastest and as fast as we can go right now.  The latest is ~3.5e9 instructions per second.  But we acn get more done by piplining.  Similar to an assembly line.  We do not increase the speed, we increase the throughput.  Remember the steps are
     1) fetch the instruction    IF
     2) decode the instruction   ID
     3) fetch the operands       OF
@@ -1962,4 +1962,197 @@ SPARC designers make th epipline visible to programmers.  There are two stages i
         ^
     the value has not been executed
 
+We want the processor to think that it has infinite memory.  Basically buffers all the way down.  (Memory works as a cache for the disk through virtual memory.) Can be byte or word addressable.  The size is limited by the size of the program counter, pc.  (For a pc of n-bit size, the memory has 2^n ytes of memory.)  Multiple byte data representation.  (Big-endian or little endian.)  Multiple byte data is aligned in memory.  We think of memory as a string of bits whch can hold data, instructions, or garbage.  Info is bits and context.
+
+A process is the smallest computation that competes for system resources.  A process also has an address space.  It is the set of addresses associated with a process.  Memory chips.
+
+ex: we have a process of a 4K bytes.  (pc is 12 bts to reach each address.)  The onlything avalable are 1 K memory chips. So, we have 4 chips.  It will look like
+
+      00         01         10         11
+    +----+     +----+     +----+     +----+
+   0|    | 1024|    | 2048|    | 3072|    |
+    |    |     |    |     |    |     |    |
+    |    |     |    |     |    |     |    |
+    |    |     |    |     |    |     |    |
+1023|    | 2047|    | 3071|    | 4096|    |
+    +----+     +----+     +----+     +----+
+
+These are known as banks.  We have a bank selection line in the processor. (So for address 1025 the bank selection line well get bank 01.)  To read 0-3 consecutive bytes it will require 4 memory accesses.  Because they are consecutive they will all be in the same chip, which only allows one operation at a time.  So they came up with interleaved memory.  This looks like
+
+      00         01         10         11
+    +----+     +----+     +----+     +----+
+   0|    |    1|    |    2|    |    3|    |
+    |    |     |    |     |    |     |    |
+    |    |     |    |     |    |     |    |
+    |    |     |    |     |    |     |    |
+4093|    | 4094|    | 4095|    | 4096|    |
+    +----+     +----+     +----+     +----+
+
+So the same request would be accomplished with a single read to memory. (This is done in IBM mainframes.)  There is a problem if we want to add 1K of memory (we have to renumber everything.)
+
+          offset             bank #
+    +------------------------------+
+    |                      |       |
+    +------------------------------+
+
+When we remap the banks we hav 00 0110 11.  Then you add in one bit and you get 000 001 010 011 100.  But then we hav a gap with 101 110 111 not being mapped.)  So, we add memory in powers of two.
+
+Program executon starts with loading the program.  It is loaded in the load-point.  The load point is kept track of by the OS.  When we execute a program we are finding it n memory then we are requesting the next load point.
+
+    |-----|         |/////|
+    |/////|         |-----|
+    |-----|         |/////|
+    |/////|         |-----|
+    |-----|<-ld pt=>|a.out|
+    |     |         |-----|
+    |-----|         |     |
+    |     |         |-----|
+    |-----|         |     |
+
+If the load point is past the end of the available memory, then we have problem.  It would seem that we have to wait for some memory to free.  Say we have a 32 bit pc.  t could have 4 GB of memory, but we only have 1 GB.  The 4 GB is known as virtual memory.  We need to map th evrtual memory to the physical memory.  We can not have a virtual address greater than the size of pc.  This maping is known as addres translaton.  More computrs have 64 bit processors.  No computers have 2^64 of memory.  OSs can not even gve those addresses.  Windows and Linux restrict address size to 48 bytes.  We cut up the virtual addres space in the patch size pwises(?)  (Of a fixed size.) We add a 4K memory we could shape it up in 4 1K patches.  Then we shape the vrtual memory in the same number of segments. So the vrtual memory looks lke
+
+
+
+        VA                  PA
+    +--------------+
+    |              |
+    |              |    +--------+
+    |            ------>|        |
+    |              |    |        |
+    |              |    +--------+
+    |              |
+    |              |
+    +--------------+
+
+
+We normally consider the process space to be contiguous. (Which it needs to be).  When we map the virtual onto the physical the vrtual process would not be contiguous.
+
+        22                      10
+    +--------------------------------+
+    |                      |         |
+    +--------------------------------+
+        page #               offset page
+
+When we need info in the offset within the page and in whch page it has.
+
+Doing the translation.  We have a vrtual address generated by a proces.  We want to know the physical address.  We can use a lookup table known as a page table.  Next, we want to know in an entry what are the contents of the entry.  We need to know who is allawed to access ths location (rwx.)  Validity (where could a memory resident bit.)  IF the page table becomes full then we need to wrte the contents of somethng so we mark the info to be replaced wth a dirty bit.  We need to know where it is in physcal memory, known as the page frame address. (Or desk black address if it is in the hard drive.)
+
+Page fault -- referenced page not found in memory.  Generally, this ends in a segmentation fault.  Unless their is a page fault correction.  (If the memory is ful then we have to choose a vctm for replacement accordng to spatial locality of reference.)  (If the memory is not full we simply place the value in.)  If there is a page fault we suspend the process then we run our page fault currection algorithm and we resume the process.  We need this process to be very fast so we need hardware support. (We need a memory management unit. (MMU)). This came in 1986.  Page tables are maintained in memory.
+
+        VM                   PM
+    +--------+             +-----+
+    |        |             |     |
+    |        |<--> MMU <-->|     |
+    |        |             +-----+
+    |        |
+    +--------+
+
+ex: We have a 32-bit processor.  1 MB page sze, 8 byte entries 2^15 bytes for the
+    512     *   8 bytes = 2^23*2^3 = 2^26 bytes storage required to maintan the
+    page sze    entry                page table.
+
+f we have a 200 ns acsess we have to access memory 2 tmes (look it up in physcal memory, then n the memory.)  These 400 ns delay.  So they implemented a fuly associative cache. (Look up each address at the same tme.)  Ths s called translaton look aside pofer (?).  (Generally less than 512 bts.)  We are agan using the principal of locality of reference.
+
+There is a special register called the PT_base register.  When we want to map vrtual addresses to physical addresses we break up the virtual space.
+
+    Translaton process
+
+                                              pt_base_reg
+                                           +---------------+
+                                           |               |
+                                           +---------------+
+                    +--------+--------+            |
+    virtual address | page # | offset |--------------------------------------+
+                    +--------+--------+            |                         |
+                       |                           |     +--------------+    |
+                       |                           |     |--------------|    |
+                       |                           |     |--------------|    |
+                       +--------------------------add--->|     | pf-addr|-+  |
+                       |         TCB                     |--------------| |  |
+                       |      +---------+                |--------------| |  |
+                       |  +-->| pg# |   |                +--------------+ |  |
+                       +--|-->|     |   |                                 |  |
+                          |-->|     |   |          hit                   _|_ |
+                          +-->|     |   |-------------------------------|OR ||
+                              +---------+                                \_/ |
+                                                                          |  |
+                          access control                         +---------+-----+
+                                                                 |         |     |
+                                                                 +---------+-----+
+
+
+Access control bit, memory resident bit, dirty bit, page frame address or address on disk.  If the page is not in memory we have a page fault.  If there is a page fault, we pausethe process, find the page, and resume the project.  We also check the TCB to make t faster.  The TCB s known as associative memory -- it allows a search on partal information.  Not related to a fully associative cache.
+
+Top-level translation
+
+            A -------> VAddr
+                        |
+                        v
+                       TLB
+                    +-------+
+                    |       |
+                    +-------+
+                      /   \
+                    miss  hit
+                    /       \
+              allow page   check access
+               table to        |    \
+               translate       |     \
+              /      |
+             /       |found
+            /        |
+        page fault  build phyisical
+           |        access
+           |        (update TLB to
+           |         preserve locality)
+        page fault
+        correction
+           |
+        build physical
+        access
+        (update MMU (TLB)
+         to preserve locality.)
+
+
+
+Birds-eye view of busses, intro to I/O
+To ways to do I/O.  Prossessor controled. (The processer is supervised)  If we have multtasking ths does not work. Interrupt driven I/O. Formally an interrupt is an event that occurs outside of the processor and requires the processor's attention.  So we need a highway through which the contact a sysure (?) device.  Ths s the bus.
+
+Examples of busses:
+    PCI  (active, centralized)
+    PCIE
+    SATA
+    USB
+
+        CPU         memory
+         |             |
+        _|_____________|_____________
+                           |      |
+                           ^      ^
+                          /_\    /_\
+                          D1     D2
+
+If we have several devices in the bus, we have a problem.  This can be mitigated in several ways.  In the first there was a sngle line.  The CPU does not know whch of the devices raised it.  So the CPU sends an ACK signal.  IF the first device sent it, it blocks the ACK from the other processes and responds to it.
+
+        CPU         memory
+         |             |
+        _|_____________|_____________
+              interrupt    |      |
+            <------------- ^      ^
+          ------------->  /_\    /_\
+          ACK             D1     D2
+           <--------------
+
+But if the first devce is very active, it can starve the other devces. So, then we provide multiple interrupt lines.  This s called bus arbitration.  If the BA is in the processor it is passive and would not control who goes next.  But then the processor has to decde.  So we make an active bus. (Or smart bus.)  Which decides who controls the bus next. (Called the bus master.)
+
+Serial busses only allow serial busses otherwise it is parellel bus.  (PCF is parallel.) We can send multple bits in parallel.  Busses are limited by bandwidth. (How many bts we can transfer per unit time.)  The first PC bus was a 32 bit bus at 33MHz.  32 bts are 4 bytes, 33MHz speed is 10^6.  So there are 4x33x10^6 bytes per second.  PCIE is 64 bts at 100 MHz.  Front side bus between memory and the CPU.
+
+        front-side bus
+        |
+        V
+    CPU = memory
+     |    |
+     |____|__________ bus
+
 https://en.wikipedia.org/wiki/Locality_of_reference
+
