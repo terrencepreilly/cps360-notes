@@ -1,3 +1,5 @@
+Corrections can be submitted through pull request at https://github.com/terrencepreilly/cps360-notes
+
 VON NEUMANN ARCHITECTURE
 COMPUTER STRUCTURE OVERVIEW
 C LANGUAGE
@@ -52,6 +54,25 @@ ISA
         SPARC IMPLEMENTATION
     SYSTEM CALLS
     OPERAND ENCODING
+    ENCODING OF INSTRUCTIONS
+    MICRO CODE
+    ROLE OF COMPILER
+CACHE
+    MEMORY HIERARCHY
+    CACHE COHERENCE PROBLEM
+    CACHE REPRESENTATION
+    BLOCK VIEW OF MEMORY
+    LOCALITY OF REFERENCE
+    SET ASSOCIATIVE CACHE
+    LOGIC DIAGRAM FOR DIRECT CACHE
+    LOGIC DIAGRAM FOR SET-ASSOCIATIVE CACHE
+PIPELINE INSTRUCTION EXECUTION
+    PIPELINE HAZARDS
+    ADDRESS TRANSLATION
+    PAGE FAULT
+    LOGIC DIAGRAM OF TRANSLATON PROCESS
+    FLOW CHART OF TOP-LEVEL TRANSLATION
+BUSSES AND I/O
 
 ------------------------------------------------------------------------------
 VON NEUMANN ARCHITECTURE
@@ -1636,12 +1657,6 @@ ISA
         Allows for evolution of a family of processors.
 
 
-
----------------------------EDIT LINE--------------------------------------
-
-MISC
-
-
     ROLE OF COMPILER
 
         There are 13 stages in the compilation process.  Here is a simplified
@@ -1761,8 +1776,6 @@ CACHE
         which actual address is residing in cache, we use tag bits. The tag
         bits are used to get the extra information.  Each entry in the cache
         line has a valid bit to tell if the value is of use.
-
-    CHOOSING A VICTIM FOR REPLACEMENT
 
     BLOCK VIEW OF MEMORY
         To accomplish the onto mapping from memory to cache, we divide the
@@ -1999,7 +2012,7 @@ CACHE
                                       |
                                       |v
 
-PIPLINE INSTRUCTION EXECUTION
+PIPELINE INSTRUCTION EXECUTION
 
     Single processors are the fastest and as fast as we can go right now.  The
     latest is ~3.5e9 instructions per second.  But we can get more done by
@@ -2081,8 +2094,8 @@ PIPLINE INSTRUCTION EXECUTION
 
             Ex: add %l0, %l1, %l0
 
-
     SPARC PIPELINE IMPLEMENTATION
+
         SPARC designers make the pipeline visible to programmers.  There are
         two stages in the SPARC pipline visible to programmers.  We can think
         of a fetch unit and instruction unit.
@@ -2224,6 +2237,7 @@ PIPLINE INSTRUCTION EXECUTION
         the hard drive.)
 
     PAGE FAULT
+
         Referenced page not found in memory.  Generally, this ends in a
         segmentation fault, unless their is a page fault correction.  (If
         the memory is full then we have to choose a victim for replacement
