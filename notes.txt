@@ -743,6 +743,16 @@ BUILDING COMPONENTS
                             |
                             e
 
+                Or, as a logic block
+
+                   i0
+                    ---|\
+                       | \    Y
+                       |  }---
+                   i1  | /
+                    ---|/
+
+
         DUAL INLINE 2X4 MULTIPLEXER
 
             dual inline 2x4 multiplexer -- made of 2 2x1 multiplexers.
@@ -784,6 +794,7 @@ BUILDING COMPONENTS
                         |   |---o1
                    i----|   |
                         |___|---o2
+
 
 ------------------------------------------------------------------------------
 TIMED CIRCUITS
@@ -919,10 +930,32 @@ TIMED CIRCUITS
                 ----+-----------|OR  }o-+----- Q'
                                 |___/
 
+
+                Or, as a logic block
+                        ______
+                   in  |      |  out
+                    ---| DFF  |---
+                       |__/\__|
+                          clock
+
+
+                Delay flip-flop with 2x1 mux
+
+                     +--------------------+
+                     |                    |
+                    -+--|\      ______    |
+                    i0  | \    |      |   |   out
+                        |  }---| DFF  |---+----
+                    i1  | /    |__/\__|
+                    ----|/|       clock
+                          |
+                          load
+
                 D  | Qn
                 ---|----
                 0  | 0
                 1  | 1
+
 
                 There are also toggle flip-flops and JK flip-flops
 
@@ -936,6 +969,8 @@ TIMED CIRCUITS
                 \__7 \_____7  \____/
                         1
 
+
+
 ------------------------------------------------------------------------------
 ALU
     Arithmetic Logic Unit
@@ -948,6 +983,35 @@ ALU
             \__________/
                  |
                  out
+
+        Or, alternatively, as
+
+               ci
+             __|____
+       a0   |       |
+        ----| 1-bit | z0
+       b0   |  ALU  |---
+        ----|       |
+            |_______|
+              | |  |
+            so  s1 c0
+
+    Ex:
+
+    Draw the logic diagram for a 4-bit ALU using 1-bit ALUs
+
+            z3           z2           z1           z0
+         ___|___      ___|___      ___|___      ___|___
+        |       |    |       |    |       |    |       |
+        | 1-BIT |    | 1-BIT |    | 1-BIT |    | 1-BIT |
+    co--|  ALU  |----|  ALU  |----|  ALU  |----|  ALU  |--ci
+        |_______|    |_______|    |_______|    |_______|
+         | | | |      | | | |      | | | |      | | | |
+         | | |-+------|-|-|-+------|-|-|-+------|-|-|-+- s0
+         | | +--------|-|-+--------|-|-+--------|-|-+--- s1
+         | |          | |          | |          | |
+        a3 b3        a2 b2        a1 b1        a0 b0
+
 ------------------------------------------------------------------------------
 SPARC ASSEMBLY
 
@@ -1222,11 +1286,21 @@ SPARC ASSEMBLY
 
 ISA
 
-    ISA (instruction set architecture) is made during the design of a
+    ISA (Instruction Set Architecture) is made during the design of a
     new processor, or when modifying or updating the current processor.
     Involves arithmetic operations, logic operations, controle flow
-    (calling functions), accessing memory, I/O, device access, recursion.
-    Return from subroutines.
+    (calling functions), accessing memory, I/O, device access, recursion,
+    return from subroutines.
+
+    The basic questions one asks when developing an ISA are:
+        1) How does one decide on the class of ISA (stack accumulator, etc.)?
+        2) How is memory going to be addressed (memory view word size big
+           endian little endian, etc.)
+        3) What are the addressing modes?
+        4) What are the allowed operations (integer floting point?)
+        5) Type of operands (byte half word, word, double word)
+        6) Instruction format (how to encode.)?
+
         ____________
        | High Level |
        |  Language  |
@@ -1239,166 +1313,197 @@ ISA
     MAIN FEATURES
 
     Main features:
+
         1) Classification of ISA
             Defined by stack architecture (operands are implied.  Examples:
             HP_UX, calculators, JVM.)
-        2) Accumulator register architecture.  There is a register called an
-           accumulator which is involved in all operations. (One operand is in
-           the accumulator, one is in the operand.)
+
+        2) Accumulator register architecture.
+           There is a register called an accumulator which is involved in all
+           operations. (One operand is in the accumulator, one is in the
+           operand.)
                 c <- a + b    <==>     load a
                                        add b
                                        store c
            Examples include the first processor 80s used in automatic doors and
            such.)
+
         3) Load and store architecture.
                 load r1, [A]
                 load r2, [B]
                 add r1, r2, r3
                 store [C], r3
            Examples include most modern processors.
-        4) Memory acces and modes.  The ISA must address how the memory is
+
+        4) Memory access and modes.  The ISA must determine how the memory is
            addressed.  Memory is byte addressable or word addressable.  (This
            means that we can only acses words.)  It can be little endian or big
            big-endian.  Effective address -- the base address plus the offset.
-           Memory modes: immediate (operand is in the instruction itself.
-                ex: mov 2, %l2
-           register mode (the operand is in the register.)
-                ex: move %l1, %l2
-           direct address mode (The memory address is directly in the operand.)
-                ex: mov [100], %l3
-           register direction (the address is in the register.
-                ex: st %l0, [%l1]
-           register indirection (address of the address of the operand is in
-           the register (this is not supported in SPARC.)  To implement this we
-           would
-                mov 500, %l0
-                ld [%l0], %l1
-           reladive offset mode (uses effective addressing.)  The address is
-           relative to some value.)  Relative to the program counter pc.  This is
-           how branching and jumping work.  In the case of labels the address
-           must by 24-bit 2's complement, so you can jump +/- 2^23.  since
-           addresses are byte addressable, this is reduced to +/- 2^21 so it is
-           pc +/- 2^21.
 
-           load-point -- the start of a chunck of allocated memory.  So when a
+           Memory modes:
+
+               Immediate (operand is in the instruction itself.)
+                    ex: mov 2, %l2
+
+               Register mode (the operand is in the register.)
+                    ex: move %l1, %l2
+
+               Direct address mode (The memory address is directly in the
+               operand.)
+                    ex: mov [100], %l3
+
+               Register direction (the address is in the register.)
+                    ex: st %l0, [%l1]
+
+               Register indirection (address of the address of the operand is in
+               the register (this is not supported in SPARC.)  To implement this
+               we would
+                    mov 500, %l0
+                    ld [%l0], %l1
+
+               Relative offset mode (uses effective addressing.)  The address is
+               relative to some value.)  Relative to the program counter pc.
+               This is how branching and jumping work.  In the case of labels
+               the address must by 24-bit 2's complement, so you can jump
+               +/- 2^23.  since addresses are byte addressable, this is reduced
+               to +/- 2^21 so it is pc +/- 2^21.
+
+               Index mode is relative mode where one register is the index
+               register and addressing is relative to the contents of the index
+               register. This helps for accessing arrays.
+                    ex: load [%l0 + n], %l1 ! Where l0 is the index register
+               Sparc does not have this.
+
+               Autoincrement/autodecrement  this is the origin of ++. (Which now
+               simulates autoincrement/autodecrement.)
+
+           Load-point -- the start of a chunck of allocated memory.  So when a
            program is loaded it is loaded with the first instruction at the
            load point.  So compilers produce position independent code.
            (PIC)  This is code relative to the pc.
 
-           index mode is relative mode where one register is the index register
-           and addressing is relative to the contents of the indexregister.  This
-           helpsfor accessing arrays.
-                ex: load [%l0 + n], %l1 ! Where l0 is the index register
-           Sparc does not have this.
-           Autoincrement/autodecrement  this is the origin of ++. (Which now
-           simulates autoincrement/autodecrement.)
 
     ADDRESSING MODES
 
         ISA addressing modes:
-            Addressing Modes for Code
-                direct address -- One of the operands is a literal address
-                relative (pc) -- jumps/branches done relative to the program
-                    counter
-                register indirect -- The argument is located at the address in
-                    a register
+           Addressing Modes for Code
+               direct address -- One of the operands is a literal address
+               relative (pc) -- jumps/branches done relative to the program
+                   counter
+               register indirect -- The argument is located at the address in
+                   a register
 
-            Addressing Modes for Data
-                register -- The contents of our argument is in a register
-                immediate -- The argument is one of the operands
-                index -- Offsetting based on an index.
+           Addressing Modes for Data
+               register -- The contents of our argument is in a register
+               immediate -- The argument is one of the operands
+               index -- Offsetting based on an index.
 
-            indirect address -- One of the operands is a literal address,
-                but we are using its contents as the desired address
-            auto-increment -- add 1
-            auto-decrement -- subtract 1
+           Indirect address -- One of the operands is a literal address,
+               but we are using its contents as the desired address
+           Auto-increment -- add 1
+           Auto-decrement -- subtract 1
 
-// TODO check the above definitions with the book
+        Ex: 2 byte instruction size memory half-word adressable
 
-        ex: 2 byte instruction size memory half-word adressable
+            Type            Abbr    Contents
+            Program counter pc      200
+            Register        R1      400
+            Index register  xR      100
+            Accumulator     AC
 
-        Type            Abbr    Contents
-        Program counter pc      200
-        Register        R1      400
-        Index register  xR      100
-        Accumulator     AC
+            Memory:
+                Address     Contents
+                +------+------------------+
+                | 200  |  load AC         |
+                +------+------------------+
+                | 201  |  500             |
+                +------+------------------+
+                | 202  |                  |
+                +------+------------------+
+                | ...  |                  |
+                +------+------------------+
+                | 399  |  450             |
+                +------+------------------+
+                | 400  |  700             |
+                +------+------------------+
+                | ...  |                  |
+                +------+------------------+
+                | 500  |  800             |
+                +------+------------------+
+                | ...  |                  |
+                +------+------------------+
+                | 600  |  900             |
+                +------+------------------+
+                | ...  |                  |
+                +------+------------------+
+                | 702  |  325             |
+                +------+------------------+
+                | ...  |                  |
+                +------+------------------+
+                | 800  |  300             |
+                +------+------------------+
 
-        Memory:
-            Address     Contents
-            +------+------------------+
-            | 200  |  load AC         |
-            +------+------------------+
-            | 201  |  500             |
-            +------+------------------+
-            | 202  |                  |
-            +------+------------------+
-            | ...  |                  |
-            +------+------------------+
-            | 399  |  450             |
-            +------+------------------+
-            | 400  |  700             |
-            +------+------------------+
-            | ...  |                  |
-            +------+------------------+
-            | 500  |  800             |
-            +------+------------------+
-            | ...  |                  |
-            +------+------------------+
-            | 600  |  900             |
-            +------+------------------+
-            | ...  |                  |
-            +------+------------------+
-            | 702  |  325             |
-            +------+------------------+
-            | ...  |                  |
-            +------+------------------+
-            | 800  |  300             |
-            +------+------------------+
+            Mode                AC      Effective Address
+            direct address      800
+            indirect address    300
+            relative (pc)       325     EA = 500->202->702
+            register            700
+            index               900
+            register indirect   700     EA = 400 (R1)
+            immediate           500
 
-
-        Mode                AC      Effective Address
-        direct address      800
-        indirect address    300
-        relative (pc)       325     EA = 500->202->702
-        register            700
-        index               900
-        register indirect   700     EA = 400 (R1)
-        immediate           500
 
         SPARC IMPLEMENTATION
 
-        Immediate -- There is a size limitation of 13 bit two's complement
-        (-4096 to 4095)
-            mov 2, %l0
-        Register
-            mov %l0, %l1
-        Relative (pc) -- The offset is 24-bit 2's complement, actually +/- 2^19
-        because of the size of instructions and the sign byte.   This limits the
-        size of a module to 8MB.
-            ba iloop
-            nop
-        Indirect does not exist (we can simulate.)
-        Direct addressing
-            ld [100], %l1
-        Indexed We can not do [%l0 + %l1] because it may be larger than 32 bits.
-        This is how parameters are based is the call frame
-            ld [%i0 + 100], %l1
+            Immediate -- There is a size limitation of 13 bit two's complement
+            (-4096 to 4095)
+                mov 2, %l0
 
-        A -> B -> C ==> |       |                   ^   -
-                        +-------+                   |
-                        |  CF B |                   |
-                        +-------+ <-- %fp           | lower
-                        |  p B  | <-- %fp + 4       | addresses
-                        +-------+                   |
-                        |  CF A |                   |
-                        +-------+                   |   +
-        We need to use the frame pointer because the stack pointer is moving.
-        A positive offset allows you to go to the previous call fram and the
-        parameters.  Negative offsets allow you to go into the current call
-        frame.  (No future.)
+            Register
+                mov %l0, %l1
+            Relative (pc) -- The offset is 24-bit 2's complement, actually
+            +/- 2^19 because of the size of instructions and the sign byte.
+            This limits the size of a module to 8MB.
+                ba iloop
+                nop
 
-    Other ISA operations: arithmetic logical flow control transfer
-    (branch call and return)  System call interface.
+            Indirect does not exist (we can simulate.)
+
+            Direct addressing
+                ld [100], %l1
+
+            Indexed We can not do [%l0 + %l1] because it may be larger than 32
+            bits.  This is how parameters are based is the call frame
+                ld [%i0 + 100], %l1
+
+            A -> B -> C ==> |       |                   ^   -
+                            +-------+                   |
+                            |  CF B |                   |
+                            +-------+ <-- %fp           | lower
+                            |  p B  | <-- %fp + 4       | addresses
+                            +-------+                   |
+                            |  CF A |                   |
+                            +-------+                   |   +
+            We need to use the frame pointer because the stack pointer is
+            moving.  A positive offset allows you to go to the previous call
+            frame and the parameters.  Negative offsets allow you to go into
+            the current call frame.  (No future.)
+
+            Other ISA operations: arithmetic logical flow control transfer
+            (branch call and return)  System call interface.
+
+            Difference between SPARC and Intel
+                In Intel there are 16 registers for integer arithmetic, and
+                there are 16 floating point registers which have their own
+                instructions.) SPARC has 32 32-bit floating point registers.
+                (A single set %f0 - %f31) These registers are saved to the
+                stack to prevent conflicts of instrest when calling functions.)
+
+                INTEL       SPARC
+                            byte
+                word--------half word
+                double word-word
+                quad word---double word
 
     SYSTEM CALLS
           ____________
@@ -1429,9 +1534,48 @@ ISA
                 call exit, 0 ! actualy doing a ta 0
                 nop
 
+        Halt is an example of a 1-bit instruction which turns the processor off.
+
         Reading one byte at a time takes the same amount of overhead as
         reading 2048 bytes, say, from the system.  So we generally do
         buffered IO, because it is more effective.
+
+        This is the purpose of the restore instruction.  Then callee saves
+        the registers, uses the registers then restores the value.  (In
+        Intel the caller saves the registers.) (In multiple core processors
+        there is generally only one floting point processor<?>.)  In the old
+        days, floating point operations where done in separate coprocessors
+        (Now they are in the same processor.)
+             ___________          __________
+            | INTEGER   |------->|   fp     |
+            | Processor |        | Processor|
+            |___________|<-------|__________|
+
+            _______
+            0 | %g0
+              |  .
+              |  .
+              |  .
+            7 | %g7
+            __|____
+            8 | %o0
+              |  .
+              |  .
+              |  .
+            15| %o7
+            __|____
+            16| %l0
+              |  .
+              |  .
+              |  .
+            23| %l7
+            __|____
+            24| %i0
+              |  .
+              |  .
+              |  .
+            31| %i7
+            __|____
 
     OPERAND ENCODING
 
@@ -1442,121 +1586,45 @@ ISA
         etc.) (This is technicaly known as fixed size within classes.)
         ISA symcode or instruction.
 
+    ENCODING OF INSTRUCTIONS
+
+        In SPARC all instructions are 32 bits.  Consider add.
+            add register1, register2-or-immediate, register_destination
+        It looks like
+             _______________________________________________________________
+            | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+            |_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|
+            31                                                             0
+
+                type                     31-30
+                register destination     29-25
+                opcode                   24-19
+                source1                  18-14
+                immediate flag           13
+                immediate value          5-12
+                register source          4-0
+
+        If the immediate flag is 0, the source is a register, and we ignore
+        the bits 5-13.  If the immediate flag is 1, then the source is an
+        immediate value and it takes bits 0 to 12.  This means that immediate
+        values are limited to 13 bits.
+
+        Ex:  convert the instruction add %i0, %l2, %o2
+
+             int x;
+             x = x | (type & 0x2);           // set the type
+             x = (x << 5) | 0xa;             // set output register
+             x = (x << 6) | (opcode & 0x6);  // set the opcode
+             x = (x << 5) | (opcode & 0x18); // set the source
+             x = (x << 1);                   // not immediate
+             x = (x << 13) | 0x11;           // set the rs2 register
 
 
+    MICRO CODE
 
----------------------------EDIT LINE--------------------------------------
-Draw the logic diagram for a 4bit ALU using 1bit ALUs
-
-        z3           z2           z1           z0
-     ___|___      ___|___      ___|___      ___|___
-    |       |    |       |    |       |    |       |
-    | 1-BIT |    | 1-BIT |    | 1-BIT |    | 1-BIT |
-co--|  ALU  |----|  ALU  |----|  ALU  |----|  ALU  |--ci
-    |_______|    |_______|    |_______|    |_______|
-     | | | |      | | | |      | | | |      | | | |
-     | | |-+------|-|-|-+------|-|-|-+------|-|-|-+- s0
-     | | +--------|-|-+--------|-|-+--------|-|-+--- s1
-     | |          | |          | |          | |
-    a3 b3        a2 b2        a1 b1        a0 b0
-
-Draw th elogic diagram for a 2x1 mux using and or and not.
-    i0          __
-    -----------|  \
-               |AND|---+
-        +------|__/    |    ___
-        |              +---\   \   O
-        |                  | OR }---
-    i1  |       __     +---/___/
-    ----|------|  \    |
-        |      |AND|---+
-        +------|__/
-        |
-        |s
-
-    2x1 mux
-   i0
-    ---|\
-       | \    Y
-       |  }---
-   i1  | /
-    ---|/
-
-1 bit memory
-        ______
-   in  |      |  out
-    ---| DFF  |---
-       |__/\__|
-          clock
-
-     +--------------------+
-     |                    |
-    -+--|\      ______    |
-    i0  | \    |      |   |   out
-        |  }---| DFF  |---+----
-    i1  | /    |__/\__|
-    ----|/|       clock
-          |
-          load
-
-
-           ci
-         __|____
-   a0   |       |
-    ----| 1-bit | z0
-   b0   |  ALU  |---
-    ----|       |
-        |_______|
-          | |  |
-        so  s1 c0
-
-ISA -- Count of operators (0, 1, 2, 3, variable) and length of instructions.
-(Whether fixed or variable length or classes of instructions (1-byte, 2-byte,
-...40 byte)).  (Halt is an example of a 1-bit instruction which turns the
-processor off.)  Floating point instructions and representation
-(representation is generally IEEE 754 single and double precision.) In Intel
-there are 16 registers for integer arithmetic, and there are 16 floating
-point registers which have their own instructions.) SPARC has 32 32-bit
-floating point registers. (A single set %f0 - %f31) These registers are saved
-to the stack to prevent conflicts of instrest when calling functions.)
-
-This is the purpose of the restore instruction.  Then callee saves the
-registers, uses the registers then restores the value.  (In Intel the caller
-saves the registers.) (In multiple core processors there is generally only one floting point processor<?>.)  In the old days, floating point operations where done in separate coprocessors (Now they are in the same processor.)
-     ___________          __________
-    | INTEGER   |------->|   fp     |
-    | Processor |        | Processor|
-    |___________|<-------|__________|
-
-Including of instructions.  In SPARC all instructions are 32 bits.  Consider add.
-    add rs1, rs2-or-imm, rd
-It looks like
-     _______________________________________________________________
-    | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
-    |_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|
-    31                                                             0
-
-    type 31-30
-    rd   29-25
-    opcode 24-19
-    src1 18-14
-    immediate 13
-    immediate value  5-13
-    rs 4-0
-
-    for i = 0 we ignore the bits 5-13.  For i = 1 then there is a immediate value.  So we store it there. (That is why the immediate value can only be 13 bits.)
-
-    ex:  convert the instruction add %i0, %l2, %o2
-
-         int x;
-         x = x | (type & 0x2); // set the type
-         x = (x << 5) | 0xa;    // set output register
-         x = (x << 6) | (opcode & 0x6); // set the opcode
-         x = (x << 5) | (opcode & 0x18);// set the source
-         x = (x << 1); // not immediate
-         x = (x << 13) | 0x11;  // set the rs2 register
-
-    Micro code is firmware.  In a processor which is not fixed length they will use a micro code module below assembly to interac with the machine.
+        Micro code is firmware.  In a processor which is not fixed length
+        they will use a micro code module below assembly to interact with the
+        machine.
              ______
             | ASM  |
             |------|
@@ -1565,66 +1633,31 @@ It looks like
             | HW   |
             |______|
 
-     Allows for evolution of a family of processors.
-    1) How does one decide ion the class of ISA (stack accumulator, etc.)?
-    2) How is memory going to be addressed (memory view word size big endian little endian, etc.)
-    3) What ar the addressing modes?
-    4) What are the allowed operations (integer floting point?)
-    5) Type of operands (byte half word, word, double word)
-    6) Instruction format (how to encode.)?
-
-    Role of compiler.
-        c source --> gcc --> a.out
-    there are 13 stages in the compilation process.
-
-
-    Intel       Sparc
-                byte
-    word--------half word
-    double word-word
-    quad word---double word
+        Allows for evolution of a family of processors.
 
 
 
-    _______
-    0 | %g0
-      |  .
-      |  .
-      |  .
-    7 | %g7
-    __|____
-    8 | %o0
-      |  .
-      |  .
-      |  .
-    15| %o7
-    __|____
-    16| %l0
-      |  .
-      |  .
-      |  .
-    23| %l7
-    __|____
-    24| %i0
-      |  .
-      |  .
-      |  .
-    31| %i7
-    __|____
+---------------------------EDIT LINE--------------------------------------
+
+MISC
 
 
-    C
-    C++   --> front --> intermediate  --> gcc backend --> a.out
-    go        end       code
-    Java
+    ROLE OF COMPILER
 
-    The idea is that when you want to create a new language, you can write a new front end and make the intermediate code and then you're done.
+        There are 13 stages in the compilation process.  Here is a simplified
+        version:
+            C
+            C++   --> front --> intermediate  --> gcc backend --> a.out
+            go        end       code
+            Java
 
-
-    visual basic
-    C#            --> front --> CLR --> backend
-    F#                end
-    Visual C++
+        The idea is that when you want to create a new language, you can
+        write a new front end and make the intermediate code and then you're
+        done.  In a Windows environment this looks like:
+            visual basic
+            C#            --> front --> CLR --> backend
+            F#                end
+            Visual C++
 
 
 CACHE
@@ -1649,21 +1682,34 @@ CACHE
       -----+------------------------------+------
                          bus
 
+             cache                   memory
+            +----+                +--------+
+            | 0  |                |  0     |
+            +----+                +--------+
+            | 1  |<-------------->|  1     |
+            +----+                +--------+
+            | 2  |                |  ...   |
+            +----+                +--------+
+            | 3  |<-------------->|  15    |
+            +----+                +--------+
+
+            cache address = memory addres mod cache size
+
       Here, data can travel along the bus, or along the cache line.  If data is
     in the cache, it is "hit".  If it is not in the cache, it is a "miss".  If
-    The data is not in the cache, it is loaded from memory and placed in the cache.
-    If the value is updated during the runtime of the program, and it is in cache,
-    then the value is updated in cache only.  If the value no longer fits in cache,
-    it is stored in memory.
+    The data is not in the cache, it is loaded from memory and placed in the
+    cache.  If the value is updated during the runtime of the program, and
+    it is in cache, then the value is updated in cache only.  If the value
+    no longer fits in cache, it is stored in memory.
 
-    The cache is totally opaque to both the CPU and the memory.  This is known as a
-    snooping cache.  So the cache looks at the traffic in the bus.
+    The cache is totally opaque to both the CPU and the memory.  This is
+    known as a snooping cache.  So the cache looks at the traffic in the bus.
 
-    Memory Hierarchy
-        The fastest memory also tends to be the most expensive, because it involves
-        increased hardware and time for design.  To maximize speed, and to minimize
-        cost, we organize memory in a hierarchy.
+    MEMORY HIERARCHY
 
+        The fastest memory also tends to be the most expensive, because it
+        involves increased hardware and time for design.  To maximize speed,
+        and to minimize cost, we organize memory in a hierarchy.
 
                  + ^                  /\                   | -
                    |                 /  \                  |
@@ -1679,118 +1725,218 @@ CACHE
                    |       /         disk         \        |
                  - |      /________________________\       V +
 
-    The cacheis smaller in size.  tm -- memory latency.  tc is the latency of the cache.  hit -- a refrence to information is found in the cache.  (opposit of a miss.)  the object then is to maximize the hit-ratio (the percentage of times we found the data in cache.)  tc = h*tc + (1-h)*tm.
+    When discussing the advantages of a cache, we speak of memory latency
+    (symbolized tm), cache latency (symbolized tc), hits (a reference to
+    information is found in the cache), and misses (a reference to information
+    is not found in the cache.)
 
-    We want te << tm.  Cache coherence problem -- when we do a write it will write the following to the cache it could be different from the value stored in the memory.  To solve it we cache update only then we update memory when we reuse the cache entry or we can implement write through cache.
+    The object then is to maximize the hit-ratio (the percentage of times we
+    found the data in cache.)  tc = h*tc + (1-h)*tm.  We want tc << tm.
 
-    The cache is smaller than the memory so we have to complete a move use mod.
+    CACHE COHERENCE PROBLEM
+        When trying to maximize the hit-ratio, it makes sense only to write to
+        the cache.  However, when we update only the cache, the values in the
+        cache differ from those in memory. This the cache coherence problem.
+        To solve the cache coherence problem, we update the memory only when
+        we reuse a cache entry.
 
-        cache                   memory
-        +----+                +--------+
-        | 0  |                |  0     |
-        +----+                +--------+
-        | 1  |<-------------->|  1     |
-        +----+                +--------+
-        | 2  |                |  ...   |
-        +----+                +--------+
-        | 3  |<-------------->|  15    |
-        +----+                +--------+
+        We need to choose a "victim for replacement".  This is all called
+        eventual consistency.  We need extra information to store the
+        location of the memory in the cache.
 
-        cache address = memory addres mod cache size
+    CACHE REPRESENTATION
 
-    We need to choose a "victim for replacement".  This is all called eventual consistency.  We need extra information to store the location of the memory in the cache.
-    cache line -- the data plus the location of the memory.
-    The lower bits are used to get the imdues of teh info in the cache.  The bits are used to get the extra information.  Each entry in the cache line has a valid bit to tell if the value is of use.
 
-    1 + tag + index + offset
-    cache line entry + data
+        The cache line is the data plus the location of the memory.  We form
+        a cache line from a memory address. The lower bits of the memory
+        address are used to get the address of the info in the cache.
 
-4/14/16
+            Cache line entry
+            +------------------------------------------------+
+            |v|    tag         |   index     |  offset       |
+            +------------------------------------------------+
+
+        Knowing the address in the cache is not sufficient, because multiple
+        addresses in memory map to a single address in cache.  To identify
+        which actual address is residing in cache, we use tag bits. The tag
+        bits are used to get the extra information.  Each entry in the cache
+        line has a valid bit to tell if the value is of use.
+
     CHOOSING A VICTIM FOR REPLACEMENT
-    block view of memory.  A -- block address N (=n^2) blocks in cache.  The block it address A is the cache I = A mod n.  ex supose block size is one memory location and n = 4.  then the address looks like
 
-        cache                   memory
-        +----+                +--------+
-        | 0  |                |  0     |
-        +----+                +--------+
-        | 1  |<-------------->|  1     | A
-        +----+                +--------+
-        | 2  |                |  ...   |
-        +----+
-        | 3  |
-        +----+
+    BLOCK VIEW OF MEMORY
+        To accomplish the onto mapping from memory to cache, we divide the
+        memory into blocks of size N, where N = n^2 for some integer, n.
+        Suppose a block address, A.  Then the cache address, I = A mod n.
+        Because N = n^2, we can calculate the block address A through bit
+        shifts.
 
-    So cache will hold in cach block one value 0, 4, 8, 12, 16, ...  A cache location looks like
+        Ex. Suppose n = 4, and A is 1.  Then the address looks like
+
+            cache                   memory
+            +----+                +--------+
+            | 0  |                |  0     |
+            +----+                +--------+
+            | 1  |<-------------->|  1     | A
+            +----+                +--------+
+            | 2  |                |  ...   |
+            +----+
+            | 3  |
+            +----+
+
+        So cache will hold in cach block one value 0, 4, 8, 12, 16, ...  A
+        cache location looks like
+
+                valid
+                |
+                v  tag   index   offset
+               +-+-----+-------+---------------+
+               | |     |       |               |
+               +-+-----+-------+---------------+
+
+        If address were of size 32 and we had a cach of 4 there would be 30
+        tag bits because we would need 2 bits to address the cache address.
+
+    LOCALITY OF REFERENCE
+
+        A program's behaviour happens only in a certain part of address
+        space (special locality of reference.)
+
+        Temporal locality of reference.  Suppose we are at time T then the
+        probability of reference lies in the time.
+
+        Ex: Take the following function:
+
+            int transmit(int vector[N]) {
+                int i, sum;
+                sum = 0;
+                for (i = 0; i < N; i++) {
+                    sum += vector[i];
+                }
+                return sum;
+            }
+
+            The spatial locality of reference is good (because we are accessing
+            sequential values.)
+
+        Ex: Take the following function:
+
+            int sumit(int vec[N]) {
+                int i, sm = 0;
+                for (i = 0; i < N; i++)
+                    sm += sm + vec[i];
+                return sm;
+            }
+
+            Spacial locality of reference is bad
+            |----|////|----->
+                      i
+            Temporal locality of reference
+            |----|////|----->
+                 t-8  t
+
+            Let us assume row major, cache size N=8, and we read 64 bytes at
+            a time.  There is a miss in the first access vec[0].  We read
+            from the cach and then we have a hit for vec[1,...,8].
+
+                vec[0] -> miss
+                vec[1] -> hit
+                vec[2] -> hit
+                ...
+
+            Now suppose we have a java function to some two dimensional array
+
+            int sum2d(int v[m][n]) {
+                int i, j, sum = 0;
+                for (j = 0; j < n; j++)
+                    for (i = 0; j < m; i++)
+                        sum += sum + v[i][j];
+                return sum;
+            }
+
+            In memory, this looks like
+
+                i=0       i=1       i=2
+                +-----------------------------+
+                |        |         |          |
+                +-----------------------------+
+                    N        N           N
+
+            The access should look like
+
+                v[0][0] -> miss
+                v[1][0] -> miss
+                v[2][0] -> miss
+
+            We could make this more efficient by incrementing the row first.
+
+
+    L1, L2, AND L3 CACHES
+
+        L1 and L2 cache are in the die.  L3 is outside of the die.
+
+            +----------------------+
+            |  +----+     +-----+  |
+            |  | L1 |     | L1  |  |
+            |  | L2 |     | L2  |  |
+            |  +----+     +-----+  |
+            |  <------L3-------->  |
+            +----------------------+
+
+    SET ASSOCIATIVE CACHE
+
+        set associative cache (used to block the poor locality of reference.)
+        We allow a particular memory addres to be at more than one cache
+        address. (Intel has a 16-way asociative cache.  That is, each memory
+        address can be located in any of 16 cache locations.) So we could,
+        say, have a block of cache made up of 4 elements then it the
+        sequence 3, 11, 3, 11 would map to
+
+            +---------+
+            |   3     |
+            +---------+
+            |  11     |
+            +---------+
+            |         |
+            +---------+
+            |         |
+            +---------+
+
+        Ex: We have a 2-way set associative (each element has 2 locations it could
+        occupy.)  Now the cache line looks like
 
             valid
-            |
-            v  tag   index   offset
-           +-+-----+-------+---------------+
-           | |     |       |               |
-           +-+-----+-------+---------------+
+              |
+              v  tag  set index  offset
+             +-+-----+---------+--------+
+             | |     |         |        |
+             +-+-----+---------+--------+
 
-    If address were of size 32 and we had a cach of 4 there would be 30 tag bits.
+        Ex: Suppose we have a 32 bit address space.  Block size 32 bytes
+        (2^5).  so we have 5 offset bits.  Assume a 64 KB cache for data. #
+        of blocks = 2^6 * 2^10 / 2^5 = 2^k/2^5 = 2^11 = 2048. (64 KB is
+        2^16).  (2^5 comes from the 32 bytes.)  Tag field = 32 - 11 - 5 = 16.
 
-    Locality of Reference
-        A programs behaviour hapens only in a certain part of address space (special locality of reference.)  Then the spacial locality of reference is _____________.
-    Temporal locality of reference.  suppose we are at time T then the probability of reference lies in the time.
+                 tag     set ind. offset
+             +----------+-------+-----+
+             |<---16--->|<--9-->|<-5->|
+             +----------+-------+-----+
 
-    int transmit(int vector[N]) {
-        int i, sum;
-        sum = 0;
-        for (i = 0; i < N; i++) {
-            sum += vector[i];
-        }
-        return sum;
-    }
+        The first thing you do is you find the block size.
 
-    THe spacial locality of reference is good (because we are accessing sequential values.)  Temporallocality of reference is good because ...
-    No reference to cach if we have tthe value 3, 11, 3, 11 the spacial locality of reference is bad because it does not help.  This is called a direct mapped cache.)
 
-    L1 and L2 cache are in the die.  L3 is outside of the die.
+        FULLY ASSOCIATIVE CACHE
 
-    +----------------------+
-    |  +----+     +-----+  |
-    |  | L1 |     | L1  |  |
-    |  | L2 |     | L2  |  |
-    |  +----+     +-----+  |
-    |  <------L3-------->  |
-    +----------------------+
+            A cach with a set of size 1.  Then in looks like
 
-    set associative cache (used to block the poor locality of reference.)  We allow a particular memory addres to be at more than one cache address. (Intel has a 16-way asociative cache.  That is, each memory address can be located in any of 16 cache locations.)  So we could, say, have a block of cache made up of 4 elements then it the sequence 3, 11, 3, 11 would map to
+                +----------+----------------+
+                |   tag    |   offset       |
+                +----------+----------------+
 
-    +---------+
-    |   3     |
-    +---------+
-    |  11     |
-    +---------+
-    |         |
-    +---------+
-    |         |
-    +---------+
+            This is how virtual memory is implemented.  (This means that any
+            item can go any where in the set.)
 
-    it is good.  In general, we have N blocks of cache each with k elements then addres of memory location A is A mod k.  ex:  we have a 2-way set associative (each element has 2 locations it could set.)  Nou the cache line looks like
-
-    valid
-      |
-      v  tag  set index  offset
-     +-+-----+---------+--------+
-     | |     |         |        |
-     +-+-----+---------+--------+
-
-    ex: 32 bit addres space m.  Block size 32 bytes (2^5).  so we have 5 offset bits.  Assume a 64 KB cache for data. # of blocks = 2^6 * 2^10 / 2^5 = 2^k/2^5 = 2^11 = 2048. (64 KB is 2^16).  (2^5 comes from the 32 bytes.)  Tag field = 32 - 11 - 5 = 16.
-            tag     set ind. offset
-        +----------+-------+-----+
-        |<---16--->|<--9-->|<-5->|
-        +----------+-------+-----+
-    The first thing you do is you find the block size.
-
-    fully associative cache is a cach with a set of size 1.  Then in looks like
-
-        +----------+----------------+
-        |   tag    |   offset       |
-        +----------+----------------+
-    This is how virtual memory is implemented.  (This means that any item can go any where in the set.)
+    LOGIC DIAGRAM FOR DIRECT CACHE
 
                                         cache
          memory address                 valid tag    data
@@ -1815,32 +1961,32 @@ CACHE
                              +---------------|--------+     |
                                              |              |
 
-    Set-associative cache
+    LOGIC DIAGRAM FOR SET-ASSOCIATIVE CACHE
 
     +---+-----+------+   +---+---+------+     +---+---+------+
     |tag|index|offset|   | v |tag| data |     | v |tag| data |
     +---+-----+------+   +---+---+------+     +---+---+------+
       |          |       | | | | |   |  |     | | | | |   |  |
-      |                  +-|-+-|-+---|--+     +-|-+-|-+---|--+
-      |                  | | | | |   |  |     | | | | |   |  |
-      |                  +-|-+-|-+---|--+     +-|-+-|-+---|--+
-      |                  | | | | |   |  |     | | | | |   |  |
-      |                  +-|-+-|-+---|--+     +-|-+-|-+---|--+
-      |                  | | | | |   |  |     | | | | |   |  |
-      |                  +-|-+-|-+---|--+     +-|-+-|-+---|--+
-      |                    |   |     |          |   |     |
-      |                 +--|---|-----|--------+ |   |     |
-      |                 |  |   |     |        | |   |     |
-      |                 |  | +---+   |        | | +---+   |
+      |          |       +-|-+-|-+---|--+     +-|-+-|-+---|--+
+      |          |       | | | | |   |  |     | | | | |   |  |
+      |          |       +-|-+-|-+---|--+     +-|-+-|-+---|--+
+      |          |       | | | | |   |  |     | | | | |   |  |
+      |          |       +-|-+-|-+---|--+     +-|-+-|-+---|--+
+      |          |       | | | | |   |  |     | | | | |   |  |
+      |          |       +-|-+-|-+---|--+     +-|-+-|-+---|--+
+      |          |         |   |     |          |   |     |
+      |          |      +--|---|-----|--------+ |   |     |
+      |          |      |  |   |     |        | |   |     |
+      |          |      |  | +---+   |        | | +---+   |
       +-----------------+----| = |   |        +---| = |   |
-                           | +---+   |          | +---+   |
-                           |   |     |          |   |     |
-                           |   |     |   +------|---|-----+
-                           |   |     |   |      |   |
-                          -------    |   |     -------
-                          | AND |    |   |     | AND |
-                           \___/     +---+      \___/
-                             |       |mux|        |
+                 |         | +---+   |          | +---+   |
+                 |         |   |     |          |   |     |
+                 |         |   |     |   +------|---|-----+
+                 |         |   |     |   |      |   |
+                 |        -------    |   |     -------
+                 |        | AND |    |   |     | AND |
+                 |         \___/     +---+      \___/
+                 +-----------|-------|mux|        |
                              |       +---+        |
                              |        |           |
                              |        |o1         |
@@ -1853,86 +1999,78 @@ CACHE
                                       |
                                       |v
 
-int sumit(int vec[N]) {
-    int i, sm = 0;
-    for (i = 0; i < N; i++)
-        sm += sm + vec[i];
-    return sm;
-}
-Spacial locality of reference is bad
-|----|////|----->
-          i
-Temporal locality of reference
-|----|////|----->
-     t-8  t
-Let us assume row major, cache size N=8, and we read 64 bytes at a time.  There is a miss in the first access vec[0].  We read from the cach and then we have a hit for vec[1,...,8].
-    vec[0] -> miss
-    vec[1] -> hit
-    vec[2] -> hit
-    ...
-Now suppose we have a java function to some two dimensional array
+PIPLINE INSTRUCTION EXECUTION
 
-int sum2d(int v[m][n]) {
-    int i, j, sum = 0;
-    for (j = 0; j < n; j++)
-        for (i = 0; j < m; i++)
-            sum += sum + v[i][j];
-    return sum;
-}
+    Single processors are the fastest and as fast as we can go right now.  The
+    latest is ~3.5e9 instructions per second.  But we can get more done by
+    pipelining.  Similar to an assembly line.  We do not increase the speed, we
+    increase the throughput.  Remember the steps are
 
-In memory, this looks like
+        1) fetch the instruction    IF
+        2) decode the instruction   ID
+        3) fetch the operands       OF
+        4) execute the instruction  EX
+        5) store the results        ST
 
-    i=0       i=1       i=2
-    +-----------------------------+
-    |        |         |          |
-    +-----------------------------+
-        N        N           N
+    These five steps are each implemented in hardware sparately, and they are
+    the smallest units we can currently do.  So, then ~3.5e9 of these sets can
+    be accomplished at a time (since they are independent.)  And we have around
+    3.5e9 * 5 instructions executed per second.
 
-The access should look like
-    v[0][0] -> miss
-    v[1][0] -> miss
-    v[2][0] -> miss
-we could make this more efficient by incrementing the row first.
+    The idea is that when you want to create a new language, you can write a new
+    front end and make the intermediate code and then you are done.
 
-Pipline instruction execution.  Single processors are the fastest and as fast as we can go right now.  The latest is ~3.5e9 instructions per second.  But we acn get more done by piplining.  Similar to an assembly line.  We do not increase the speed, we increase the throughput.  Remember the steps are
-    1) fetch the instruction    IF
-    2) decode the instruction   ID
-    3) fetch the operands       OF
-    4) execute the instruction  EX
-    5) store the results        ST
-These five steps are each implemented in hardware sparately, and they are the smallest units we can currently do.  So, then ~3.5e9 of these sets
-can be accomplished at a time (since they are independent.)  And we have around 3.5e9 * 5 instructions executed per second.
+    Piplining instruction execution.  We have a number of independent hardware
+    units for execution.  Involves overlapping of execution of multiple instructions:
 
-The idea is that when you want to create a new language, you can write a new front end and make the intermediate code and then you are done.
+         clock
+         ----->
+      i | IF1                  ^
+      n | IF2 ID1              | pipline full
+      s | IF3 ID2 OF1          |
+      t | IF4 ID3 OF2 EX1      |
+      r | IF5 ID4 OF3 EX2 ST1  V
+      . | IF6 ID5 OF4 EX3 ST2 TI1
+        v
 
-Piplining instruction execution.  We have a number of independent hardware units for execution.  Involves overlapping of execution of multiple instructions:
-     clock
-     ----->
-  i | IF1                  ^
-  n | IF2 ID1              | pipline full
-  s | IF3 ID2 OF1          |
-  t | IF4 ID3 OF2 EX1      |
-  r | IF5 ID4 OF3 EX2 ST1  V
-  . | IF6 ID5 OF4 EX3 ST2 TI1
-    v
-ex: We have 6 stages and there are 50 ns per operation.  Each instruction takes 6x50 = 300 ns.  In a non-piplined system, if we want to execute 100 instructions, then it will take 300x100=30,000ns.  If we have 6 stages and a 5 ns buffer 1 instruction takes 6x(50+5)=320ns.  100 instructions take 330+55x99 = 5775 ns.  In bitween stages there is a way to store the value before passing it.  This is the buffer.
+        Ex:We have 6 stages and there are 50 ns per operation.  Each
+        instruction takes 6x50 = 300 ns.  In a non-piplined system, if we
+        want to execute 100 instructions, then it will take
+        300x100=30,000ns.  If we have 6 stages and a 5 ns buffer 1
+        instruction takes 6x(50+5)=320ns.  100 instructions take 330+55x99 =
+        5775 ns.  In bitween stages there is a way to store the value before
+        passing it.  This is the buffer.
 
-There are instructions that can not be pipelined ideally.  These are called pipeline hazards.  There are 3 kinds: data hazards, control hazards, and structural hazards.  data hazards -- caused when we have a dependence when the current instruction depends on the current data that is to be produced by an earlier instruction in the pipline which is partially executed.
-    ex:
-        add %g1, %g2, %g3
-        add %g3, %g4, %g5
+    PIPELINE HAZARDS
+        There are instructions that can not be pipelined ideally.  These are
+        called pipeline hazards.  There are 3 kinds: data hazards, control
+        hazards, and structural hazards.  data hazards -- caused when we
+        have a dependence when the current instruction depends on the
+        current data that is to be produced by an earlier instruction in the
+        pipeline which is partially executed.
 
-Control hazard -- whether or not an istruction should be executed depends on the control decision made by the previous instruction in the pipline.
-    ex:
-        if (x) { y = y+x; } else {y = y-x; }
-For an x we will hav eto flush the pipline
-    ex:
-         a <- a + b; call fnction; c <- a + b;
-c<a+b is in the pipline but has to be flushed because when the function is in the execute step we want to do something else.
+        Ex:
+            add %g1, %g2, %g3
+            add %g3, %g4, %g5
 
-Structural hazard -- instruction in the pipline needs a resource being used by another instruction in the pipeline.
-    ex:
-        in IF memory is involved because we are getting nstructions from memory.  Same with OF.
+        Control hazard -- whether or not an instruction should be executed
+        depends on the control decision made by the previous instruction in
+        the pipeline.
+
+            Ex:
+                if (x) { y = y+x; } else {y = y-x; }
+            For an x we will have to flush the pipeline
+
+            Ex:
+                a <- a + b; call fnction; c <- a + b;
+                c<a+b is in the pipline but has to be flushed because when the
+                function is in the execute step we want to do something else.
+
+        Structural hazard -- instruction in the pipeline needs a resource
+        being used by another instruction in the pipeline.
+
+            Ex: In IF memory is involved because we are getting instructions
+            from memory.  Same with OF.
 
                  memory is being accessed by both OF and IF at the same time.
                   |
@@ -1941,149 +2079,207 @@ Structural hazard -- instruction in the pipline needs a resource being used by a
                IF ID OF EX ST
                   IF ID OF EX ST
 
-    ex: add %l0, %l1, %l0
-
-There is a solution talked of in the book.
-
-SPARC designers make th epipline visible to programmers.  There are two stages in the SPARC pipline to programmers.  We can think of a fetch unit and instruction unit.
-
-    ex:  mov 3, %o1
-         call .mul
-         add %o1, %l0, %l1
-
-    F   E
-  +---+---+
-  |xm |   |
-  +---+---+
-  |xc |xm |
-  +---+---+
-  |xa |xc |
-  +---+---+
-        ^
-    the value has not been executed
-
-We want the processor to think that it has infinite memory.  Basically buffers all the way down.  (Memory works as a cache for the disk through virtual memory.) Can be byte or word addressable.  The size is limited by the size of the program counter, pc.  (For a pc of n-bit size, the memory has 2^n ytes of memory.)  Multiple byte data representation.  (Big-endian or little endian.)  Multiple byte data is aligned in memory.  We think of memory as a string of bits whch can hold data, instructions, or garbage.  Info is bits and context.
-
-A process is the smallest computation that competes for system resources.  A process also has an address space.  It is the set of addresses associated with a process.  Memory chips.
-
-ex: we have a process of a 4K bytes.  (pc is 12 bts to reach each address.)  The onlything avalable are 1 K memory chips. So, we have 4 chips.  It will look like
-
-      00         01         10         11
-    +----+     +----+     +----+     +----+
-   0|    | 1024|    | 2048|    | 3072|    |
-    |    |     |    |     |    |     |    |
-    |    |     |    |     |    |     |    |
-    |    |     |    |     |    |     |    |
-1023|    | 2047|    | 3071|    | 4096|    |
-    +----+     +----+     +----+     +----+
-
-These are known as banks.  We have a bank selection line in the processor. (So for address 1025 the bank selection line well get bank 01.)  To read 0-3 consecutive bytes it will require 4 memory accesses.  Because they are consecutive they will all be in the same chip, which only allows one operation at a time.  So they came up with interleaved memory.  This looks like
-
-      00         01         10         11
-    +----+     +----+     +----+     +----+
-   0|    |    1|    |    2|    |    3|    |
-    |    |     |    |     |    |     |    |
-    |    |     |    |     |    |     |    |
-    |    |     |    |     |    |     |    |
-4093|    | 4094|    | 4095|    | 4096|    |
-    +----+     +----+     +----+     +----+
-
-So the same request would be accomplished with a single read to memory. (This is done in IBM mainframes.)  There is a problem if we want to add 1K of memory (we have to renumber everything.)
-
-          offset             bank #
-    +------------------------------+
-    |                      |       |
-    +------------------------------+
-
-When we remap the banks we hav 00 0110 11.  Then you add in one bit and you get 000 001 010 011 100.  But then we hav a gap with 101 110 111 not being mapped.)  So, we add memory in powers of two.
-
-Program executon starts with loading the program.  It is loaded in the load-point.  The load point is kept track of by the OS.  When we execute a program we are finding it n memory then we are requesting the next load point.
-
-    |-----|         |/////|
-    |/////|         |-----|
-    |-----|         |/////|
-    |/////|         |-----|
-    |-----|<-ld pt=>|a.out|
-    |     |         |-----|
-    |-----|         |     |
-    |     |         |-----|
-    |-----|         |     |
-
-If the load point is past the end of the available memory, then we have problem.  It would seem that we have to wait for some memory to free.  Say we have a 32 bit pc.  t could have 4 GB of memory, but we only have 1 GB.  The 4 GB is known as virtual memory.  We need to map th evrtual memory to the physical memory.  We can not have a virtual address greater than the size of pc.  This maping is known as addres translaton.  More computrs have 64 bit processors.  No computers have 2^64 of memory.  OSs can not even gve those addresses.  Windows and Linux restrict address size to 48 bytes.  We cut up the virtual addres space in the patch size pwises(?)  (Of a fixed size.) We add a 4K memory we could shape it up in 4 1K patches.  Then we shape the vrtual memory in the same number of segments. So the vrtual memory looks lke
+            Ex: add %l0, %l1, %l0
 
 
+    SPARC PIPELINE IMPLEMENTATION
+        SPARC designers make the pipeline visible to programmers.  There are
+        two stages in the SPARC pipline visible to programmers.  We can think
+        of a fetch unit and instruction unit.
 
-        VA                  PA
-    +--------------+
-    |              |
-    |              |    +--------+
-    |            ------>|        |
-    |              |    |        |
-    |              |    +--------+
-    |              |
-    |              |
-    +--------------+
+        Ex:  mov 3, %o1
+             call .mul
+             add %o1, %l0, %l1
+
+          F   E
+        +---+---+
+        |xm |   |
+        +---+---+
+        |xc |xm |
+        +---+---+
+        |xa |xc |
+        +---+---+
+              ^
+          the value has not been executed
+
+        We want the processor to think that it has infinite memory.
+        Basically buffers all the way down.  (Memory works as a cache for
+        the disk through virtual memory.) Can be byte or word addressable.
+        The size is limited by the size of the program counter, pc.  (For a
+        pc of n-bit size, the memory has 2^n ytes of memory.)  Multiple byte
+        data representation.  (Big-endian or little endian.)  Multiple byte
+        data is aligned in memory.  We think of memory as a string of bits
+        whch can hold data, instructions, or garbage.  Info is bits and
+        context.
+
+        A process is the smallest computation that competes for system
+        resources.  A process also has an address space.  It is the set of
+        addresses associated with a process.
+
+            Ex: we have a process of a 4K bytes.  (pc is 12 bts to reach
+            each address.)  The only things available are 1K memory chips.
+            So, we have 4 chips.  It will look like
+
+                  00         01         10         11
+                +----+     +----+     +----+     +----+
+               0|    | 1024|    | 2048|    | 3072|    |
+                |    |     |    |     |    |     |    |
+                |    |     |    |     |    |     |    |
+                |    |     |    |     |    |     |    |
+            1023|    | 2047|    | 3071|    | 4096|    |
+                +----+     +----+     +----+     +----+
+
+            These are known as banks.  We have a bank selection line in the
+            processor. (So for address 1025 the bank selection line well get
+            bank 01.)  To read 0-3 consecutive bytes it will require 4
+            memory accesses.  Because they are consecutive they will all be
+            in the same chip, which only allows one operation at a time.  So
+            they came up with interleaved memory.  This looks like
+
+                  00         01         10         11
+                +----+     +----+     +----+     +----+
+               0|    |    1|    |    2|    |    3|    |
+                |    |     |    |     |    |     |    |
+                |    |     |    |     |    |     |    |
+                |    |     |    |     |    |     |    |
+            4093|    | 4094|    | 4095|    | 4096|    |
+                +----+     +----+     +----+     +----+
+
+            So the same request would be accomplished with a single read to
+            memory. (This is done in IBM mainframes.)  There is a problem if
+            we want to add 1K of memory (we have to renumber everything.)
+
+                      offset             bank #
+                +------------------------------+
+                |                      |       |
+                +------------------------------+
+
+            When we remap the banks we have 00 0110 11.  Then you add in one
+            bit and you get 000 001 010 011 100.  But then we hav a gap with
+            101 110 111 not being mapped.)  So, we add memory in powers of two.
+
+            Program executon starts with loading the program.  It is loaded
+            in the load-point.  The load point is kept track of by the OS.
+            When we execute a program we are finding it n memory then we are
+            requesting the next load point.
+
+                |-----|         |/////|
+                |/////|         |-----|
+                |-----|         |/////|
+                |/////|         |-----|
+                |-----|<-ld pt=>|a.out|
+                |     |         |-----|
+                |-----|         |     |
+                |     |         |-----|
+                |-----|         |     |
+
+            If the load point is past the end of the available memory, then
+            we have problem.  It would seem that we have to wait for some
+            memory to free.  Say we have a 32 bit pc.  It could have 4 GB of
+            memory, but we only have 1 GB.  The 4 GB is known as virtual
+            memory.  We need to map the vrtual memory to the physical
+            memory.  We can not have a virtual address greater than the size
+            of pc.  This maping is known as address translaton.  More
+            computers have 64 bit processors.  No computers have 2^64 of
+            memory.  OSs can not even gve those addresses.  Windows and
+            Linux restrict address size to 48 bytes.  We cut up the virtual
+            address space in fixed-sized blocks of addresses.  add a 4K
+            memory we could shape it up in 4 1K patches.  Then we shape the
+            virtual memory in the same number of segments. So the virtual
+            memory looks like
+
+                    VA                  PA
+                +--------------+
+                |              |
+                |              |    +--------+
+                |            ------>|        |
+                |              |    |        |
+                |              |    +--------+
+                |              |
+                |              |
+                +--------------+
+
+            We normally consider the process space to be contiguous. (Which
+            it needs to be).  When we map the virtual onto the physical the
+            virtual process would not be contiguous.
+
+                    22                      10
+                +--------------------------------+
+                |                      |         |
+                +--------------------------------+
+                    page #               offset page
+
+            When we need info in the offset within the page and in whch page it has.
+
+    ADDRESS TRANSLATION
+
+        We have a virtual address generated by a process.  We want to know
+        the physical address.  We can use a lookup table known as a page
+        table.  Next, we want to know in an entry what are the contents of
+        the entry.  We need to know who is allawed to access this location
+        (rwx) and validity  If the page table becomes full then we need to
+        write the contents of something so we mark the info to be replaced
+        wth a dirty bit.  We need to know where it is in physcal memory,
+        known as the page frame address. (Or desk black address if it is in
+        the hard drive.)
+
+    PAGE FAULT
+        Referenced page not found in memory.  Generally, this ends in a
+        segmentation fault, unless their is a page fault correction.  (If
+        the memory is full then we have to choose a victim for replacement
+        according to spatial locality of reference.)  (If the memory is not
+        full we simply place the value in.)  If there is a page fault we
+        suspend the process then we run our page fault currection algorithm
+        and we resume the process.  We need this process to be very fast so
+        we need hardware support. (We need a memory management unit. (MMU)).
+        This came in 1986.
+
+                VM                   PM
+            +--------+             +-----+
+            |        |             |     |
+            |        |<--> MMU <-->|     |
+            |        |             +-----+
+            |        |
+            +--------+
+
+        If we have a 200 ns access we have to access memory 2 times (look it
+        up in physcal memory, then in the memory.)  This is a 400 ns delay.
+        So they implemented a fuly associative cache. (Look up each address
+        at the same time.) (Generally less than 512 bts.)  We are again
+        using the principal of locality of reference.
+
+        There is a special register called the PT_base register.  When we
+        want to map vrtual addresses to physical addresses we break up the
+        virtual space.
+
+    LOGIC DIAGRAM OF TRANSLATON PROCESS
+
+                                  pt_base_reg
+                               +---------------+
+                               |               |
+                               +---------------+
+virtual +--------+--------+            |
+address | page # | offset |--------------------------------------+
+        +--------+--------+            |                         |
+           |                           |     +--------------+    |
+           |                           |     |--------------|    |
+           |                           |     |--------------|    |
+           +--------------------------add--->|     | pf-addr|-+  |
+           |         TCB                     |--------------| |  |
+           |      +---------+                |--------------| |  |
+           |  +-->| pg# |   |                +--------------+ |  |
+           +--|-->|     |   |                                 |  |
+              |-->|     |   |          hit                   _|_ |
+              +-->|     |   |-------------------------------|OR ||
+                  +---------+                                \_/ |
+                                                              |  |
+              access control                         +---------+-----+
+                                                     |         |     |
+                                                     +---------+-----+
 
 
-We normally consider the process space to be contiguous. (Which it needs to be).  When we map the virtual onto the physical the vrtual process would not be contiguous.
 
-        22                      10
-    +--------------------------------+
-    |                      |         |
-    +--------------------------------+
-        page #               offset page
-
-When we need info in the offset within the page and in whch page it has.
-
-Doing the translation.  We have a vrtual address generated by a proces.  We want to know the physical address.  We can use a lookup table known as a page table.  Next, we want to know in an entry what are the contents of the entry.  We need to know who is allawed to access ths location (rwx.)  Validity (where could a memory resident bit.)  IF the page table becomes full then we need to wrte the contents of somethng so we mark the info to be replaced wth a dirty bit.  We need to know where it is in physcal memory, known as the page frame address. (Or desk black address if it is in the hard drive.)
-
-Page fault -- referenced page not found in memory.  Generally, this ends in a segmentation fault.  Unless their is a page fault correction.  (If the memory is ful then we have to choose a vctm for replacement accordng to spatial locality of reference.)  (If the memory is not full we simply place the value in.)  If there is a page fault we suspend the process then we run our page fault currection algorithm and we resume the process.  We need this process to be very fast so we need hardware support. (We need a memory management unit. (MMU)). This came in 1986.  Page tables are maintained in memory.
-
-        VM                   PM
-    +--------+             +-----+
-    |        |             |     |
-    |        |<--> MMU <-->|     |
-    |        |             +-----+
-    |        |
-    +--------+
-
-ex: We have a 32-bit processor.  1 MB page sze, 8 byte entries 2^15 bytes for the
-    512     *   8 bytes = 2^23*2^3 = 2^26 bytes storage required to maintan the
-    page sze    entry                page table.
-
-f we have a 200 ns acsess we have to access memory 2 tmes (look it up in physcal memory, then n the memory.)  These 400 ns delay.  So they implemented a fuly associative cache. (Look up each address at the same tme.)  Ths s called translaton look aside pofer (?).  (Generally less than 512 bts.)  We are agan using the principal of locality of reference.
-
-There is a special register called the PT_base register.  When we want to map vrtual addresses to physical addresses we break up the virtual space.
-
-    Translaton process
-
-                                              pt_base_reg
-                                           +---------------+
-                                           |               |
-                                           +---------------+
-                    +--------+--------+            |
-    virtual address | page # | offset |--------------------------------------+
-                    +--------+--------+            |                         |
-                       |                           |     +--------------+    |
-                       |                           |     |--------------|    |
-                       |                           |     |--------------|    |
-                       +--------------------------add--->|     | pf-addr|-+  |
-                       |         TCB                     |--------------| |  |
-                       |      +---------+                |--------------| |  |
-                       |  +-->| pg# |   |                +--------------+ |  |
-                       +--|-->|     |   |                                 |  |
-                          |-->|     |   |          hit                   _|_ |
-                          +-->|     |   |-------------------------------|OR ||
-                              +---------+                                \_/ |
-                                                                          |  |
-                          access control                         +---------+-----+
-                                                                 |         |     |
-                                                                 +---------+-----+
-
-
-Access control bit, memory resident bit, dirty bit, page frame address or address on disk.  If the page is not in memory we have a page fault.  If there is a page fault, we pausethe process, find the page, and resume the project.  We also check the TCB to make t faster.  The TCB s known as associative memory -- it allows a search on partal information.  Not related to a fully associative cache.
-
-Top-level translation
+    FLOW CHART OF TOP-LEVEL TRANSLATION
 
             A -------> VAddr
                         |
@@ -2115,14 +2311,11 @@ Top-level translation
 
 
 
-Birds-eye view of busses, intro to I/O
-To ways to do I/O.  Prossessor controled. (The processer is supervised)  If we have multtasking ths does not work. Interrupt driven I/O. Formally an interrupt is an event that occurs outside of the processor and requires the processor's attention.  So we need a highway through which the contact a sysure (?) device.  Ths s the bus.
-
-Examples of busses:
-    PCI  (active, centralized)
-    PCIE
-    SATA
-    USB
+BUSSES AND I/O
+    There are two ways to do I/O: processor controlled and interrupt driven.
+    Formally an interrupt is an event that occurs outside of the processor and
+    requires the processor's attention.  So we need a highway through which the
+    contact a system device.  This is the bus.
 
         CPU         memory
          |             |
@@ -2132,27 +2325,48 @@ Examples of busses:
                           /_\    /_\
                           D1     D2
 
-If we have several devices in the bus, we have a problem.  This can be mitigated in several ways.  In the first there was a sngle line.  The CPU does not know whch of the devices raised it.  So the CPU sends an ACK signal.  IF the first device sent it, it blocks the ACK from the other processes and responds to it.
+        Examples of busses:
+            PCI  (active, centralized)
+            PCIE
+            SATA
+            USB
 
-        CPU         memory
-         |             |
-        _|_____________|_____________
-              interrupt    |      |
-            <------------- ^      ^
-          ------------->  /_\    /_\
-          ACK             D1     D2
-           <--------------
+    If we have several devices in the bus, we have a problem: how does the CPU
+    know which device is communicating with it?  This can be mitigated in
+    several ways.  In the first there was a sngle line.  The CPU does not know
+    whch of the devices raised it.  So the CPU sends an ACK signal.  IF the
+    first device sent it, it blocks the ACK from the other processes and
+    responds to it.
 
-But if the first devce is very active, it can starve the other devces. So, then we provide multiple interrupt lines.  This s called bus arbitration.  If the BA is in the processor it is passive and would not control who goes next.  But then the processor has to decde.  So we make an active bus. (Or smart bus.)  Which decides who controls the bus next. (Called the bus master.)
+            CPU         memory
+             |             |
+            _|_____________|_____________
+                  interrupt    |      |
+                <------------- ^      ^
+              ------------->  /_\    /_\
+              ACK             D1     D2
+               <--------------
 
-Serial busses only allow serial busses otherwise it is parellel bus.  (PCF is parallel.) We can send multple bits in parallel.  Busses are limited by bandwidth. (How many bts we can transfer per unit time.)  The first PC bus was a 32 bit bus at 33MHz.  32 bts are 4 bytes, 33MHz speed is 10^6.  So there are 4x33x10^6 bytes per second.  PCIE is 64 bts at 100 MHz.  Front side bus between memory and the CPU.
+    But if the first device is very active, it can starve the other devces. So
+    then we provide multiple interrupt lines.  This is called bus arbitration.
+    If the BA is in the processor it is passive and would not control who goes
+    next.  But then the processor has to decde.  So we make an active bus. (Or
+    smart bus.)  Which decides who controls the bus next. (Called the bus
+    master.)
 
-        front-side bus
-        |
-        V
-    CPU = memory
-     |    |
-     |____|__________ bus
+    Serial busses only allow serial busses otherwise it is parellel bus.  (PCF
+    is parallel.) We can send multiple bits in parallel.  Busses are limited by
+    bandwidth. (How many bits we can transfer per unit time.)  The first PC bus
+    was a 32 bit bus at 33MHz.  32 bts are 4 bytes, 33MHz speed is 10^6.  So
+    there are 4x33x10^6 bytes per second.  PCIE is 64 bits at 100 MHz.
 
-https://en.wikipedia.org/wiki/Locality_of_reference
+    The front side bus resides between memory and the CPU.
+
+            front-side bus
+            |
+            V
+        CPU = memory
+         |    |
+         |____|__________ bus
+
 
